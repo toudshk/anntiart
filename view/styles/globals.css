@@ -1,0 +1,83 @@
+@import "tailwindcss";
+@import "locomotive-scroll/locomotive-scroll.css";
+@config "../../tailwind.config.ts";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Пастельные серые (тёплые, приглушённые) */
+  --color-pastel-gray-50: #f6f5f3;
+  --color-pastel-gray-100: #eceae7;
+  --color-pastel-gray-200: #e0ded9;
+  --color-pastel-gray-300: #d4d1cb;
+  --color-pastel-gray-400: #c4c0b8;
+
+  /* Пастельные бежевые */
+  --color-pastel-beige-50: #faf7f2;
+  --color-pastel-beige-100: #f3ede4;
+  --color-pastel-beige-200: #ebe2d5;
+  --color-pastel-beige-300: #e0d4c4;
+  --color-pastel-beige-400: #d3c4b1;
+
+  /* Фон hero: светло-сероватый (смесь серого и бежа), чуть темнее */
+  --color-pastel-hero: #e0ded9;
+}
+
+:root {
+  --background: #fafafa;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+@keyframes loader-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  50% {
+    transform: translateX(40%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.font-literature-decor {
+  font-family: var(--font-hero), "Cormorant Garamond", "Literata", Georgia, serif;
+}
