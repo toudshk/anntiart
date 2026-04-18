@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "bun run next dev --turbopack",
     "build": "bun run next build",
     "start": "bun run next start",

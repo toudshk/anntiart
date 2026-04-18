@@ -1,4 +1,3 @@
-import { ArtworkStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import {
@@ -86,7 +85,7 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
   const nextStatus = body.status ?? existing.status;
   let publishedAt: Date | null = existing.publishedAt;
   if (body.status !== undefined) {
-    if (nextStatus === ArtworkStatus.published) {
+    if (nextStatus === "published") {
       publishedAt = existing.publishedAt ?? new Date();
     } else {
       publishedAt = null;
