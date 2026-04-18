@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ArtworkSection {
+  works
+  collection
+}
+
+enum ArtworkStatus {
+  draft
+  published
+  sold
+  reserved
+}
+
+model Artist {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  bio       String?
+  telegram  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  artworks  Artwork[]
+}
+
+model Artwork {
+  id          String         @id @default(cuid())
+  slug        String         @unique
+  title       String
+  alt         String
+  description String
+  medium      String
+  widthCm     Int?
+  heightCm    Int?
+  priceRub    Int?
+  aspectRatio String?
+  status      ArtworkStatus  @default(published)
+  section     ArtworkSection @default(works)
+  /** Общая композиция серии (картина-мольберт с несколькими эскизами). */
+  isCollectionComposite Boolean @default(false)
+  /** Область на композиции, % от ширины/высоты родителя (только фрагменты коллекции). */
+  hotspotX    Float?
+  hotspotY    Float?
+  hotspotW    Float?
+  hotspotH    Float?
+  /**
+   * Одна интерактивная коллекция на лендинге: одно значение у общей композиции и всех её фрагментов.
+   * Если пусто — группировка по порядку в списке (legacy).
+   */
+  collectionSeriesKey String?
+  sortOrder   Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  publishedAt DateTime?
+
+  artistId String
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Restrict)
+
+  images ArtworkImage[]
+
+  @@index([section, status, publishedAt])
+}
+
+model ArtworkImage {
+  id        String   @id @default(cuid())
+  url       String
+  blurData  String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  artworkId String
+  artwork   Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@index([artworkId, sortOrder])
+}

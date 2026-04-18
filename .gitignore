@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# загруженные изображения (структура папки — в .gitkeep)
+/public/uploads/artworks/*
+!/public/uploads/artworks/.gitkeep

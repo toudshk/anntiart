@@ -81,3 +81,11 @@ img {
 .font-literature-decor {
   font-family: var(--font-hero), "Cormorant Garamond", "Literata", Georgia, serif;
 }
+
+/* react-image-crop: контрастная рамка на тёмных и светлых участках фото */
+.admin-collection-crop .ReactCrop__crop-selection {
+  border: 2px solid rgb(255 255 255 / 0.95);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.45),
+    inset 0 0 0 1px rgb(0 0 0 / 0.2);
+}

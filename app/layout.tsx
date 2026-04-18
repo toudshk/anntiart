@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist_Mono, Literata } from "next/font/google";
 
 import { LocomotiveRoot } from "view/components/LocomotiveRoot";
+import { Providers } from "view/components/Providers";
 import { SiteLoader } from "view/components/SiteLoader";
 import "view/styles/globals.css";
 
@@ -46,7 +47,9 @@ export default function RootLayout({
       className={`${baseSans.variable} ${heroDecor.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <LocomotiveRoot>{children}</LocomotiveRoot>
+        <Providers>
+          <LocomotiveRoot>{children}</LocomotiveRoot>
+        </Providers>
         <SiteLoader />
       </body>
     </html>

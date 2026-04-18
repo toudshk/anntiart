@@ -1,6 +1,6 @@
- "use client";
+"use client";
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Image from "next/image";
@@ -9,137 +9,58 @@ import {
   PICTURE_ITEMS,
   type PictureItem,
 } from "view/constants/pictures";
+import type { WorkMeta } from "view/constants/works-meta";
+import { STATIC_WORKS_META } from "view/constants/works-meta";
+import { partitionCollectionSeries } from "view/lib/collection-series";
 
-import { FramedPicture } from "./FramedPicture";
 import { WorksGallery3D } from "./WorksGallery3D";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const WORKS = PICTURE_ITEMS.filter((item) => item.section === "works");
-const COLLECTION = PICTURE_ITEMS.filter((item) => item.section === "collection");
-const COLLECTION_MAIN =
-  COLLECTION.find((item) => item.id === "collection-interesting-positions") ??
-  null;
-const COLLECTION_RELATED = COLLECTION.filter(
-  (item) => item.id !== "collection-interesting-positions",
+const FALLBACK_WORKS = PICTURE_ITEMS.filter((item) => item.section === "works");
+const FALLBACK_COLLECTION = PICTURE_ITEMS.filter(
+  (item) => item.section === "collection",
 );
 
-type WorkMeta = {
-  title: string;
-  medium: string;
-  text: string;
-  price?: string;
+export type PicturesGalleryProps = {
+  works?: PictureItem[];
+  collection?: PictureItem[];
+  workMeta?: Record<string, WorkMeta>;
+  collectionMeta?: Record<string, WorkMeta>;
 };
 
-const WORKS_META: Record<string, WorkMeta> = {
-  "white-girl": {
-    title: "Невыносимая тяжесть воспоминаний",
-    medium: "Масло, холст 50×80",
-    text:
-      "Невыносимая тяжесть воспоминаний, которые просыпаются прежде, чем я усну, и подавляют своим присутствием.",
-    price: "120.000₽",
-  },
-  "black-girl": {
-    title: "Личное",
-    medium: "Масло, холст 30×40",
-    text:
-      "О бережности к своему внутреннему миру. Не всё ценное нуждается в том, чтобы быть увиденным или разделённым. Личное становится хрупким, когда его выносят наружу, поэтому оно требует защиты. Дерево символизирует внутреннее счастье героини. Она скрывает его, не желая демонстрировать.",
-    price: "20.000₽",
-  },
-  "black-girl-2": {
-    title: "Дар ночи",
-    medium: "Масло, холст 30×40",
-    text:
-      "Картина «Дар ночи» символизирует момент появления идеи или мысли, которая приходит внезапно и тихо, чаще всего в ночное время. Ночь показана тёмной фигурой как источник вдохновения — безличная сила, передающая этот дар.",
-    price: "35.000₽",
-  },
-  "red-girl": {
-    title: "Без названия",
-    medium: "Картина маслом, холст 60×90",
-    text: "Описание будет добавлено позже.",
-  },
-  "white-girls": {
-    title: "Пора",
-    medium: "Масло, холст 120×50",
-    text:
-      "Картина с двояким смыслом о жизни и сне. О том, что пришло время уходить, двигаться вперёд. Время отпустить тяготы, перестать сопротивляться, бороться. Пора просыпаться. Растворяющиеся фигуры символизируют тех, кто принял свой путь и движется к свету, счастью, будущему. Неповторимые рисунки берёз как разнообразие воспоминаний, прожитые моменты, индивидуальный опыт, который формирует человека, но остаётся позади, когда приходит время идти дальше. Над взглядом главной героини я работала несколько дней. Мне было важно добиться того, чтобы она именно смотрела на зрителя, ожидая, когда он примет решение идти с ними.",
-    price: "200.000₽",
-  },
-  "black-girls": {
-    title: "Стремление",
-    medium: "Холст 100×110",
-    text:
-      "Картина о постепенном достижении цели. Три девушки схожи между собой по одежде и волосам, потому что все они являются частями одной личности. Каждая часть олицетворяет этап, на котором находится. Дерево лимона — главный ориентир героини. Собирая плоды, она достигает своей цели.",
-    price: "120.000₽",
-  },
-  "black-girl-3": {
-    title: "Мысль",
-    medium: "Холст 100×50",
-    text:
-      "Изображена мысль, поделенная на условно логическую часть и воодушевлённо-мечтательную. Когда одновременно говорят сердце и мозг.",
-    price: "70.000₽",
-  },
-  "white-girl-2": {
-    title: "Смотреть — не значит видеть",
-    medium: "Масло, холст 100×60",
-    text:
-      "Восприятие может быть поверхностным, может глубоким. Можно просто замечать происходящее, не вникая и не откликаясь на него, а можно по-настоящему воспринимать, осознавать, чувствовать и внутренне участвовать. Картина о разнице между автоматическим наблюдением и внимательным, осмысленным присутствием. Истинное «видеть» связано не столько с глазами, сколько с внутренним переживанием и пониманием.",
-    price: "200.000₽",
-  },
-};
+const COLLECTION_SECTION_INTRO =
+  "Одна сцена на мольберте объединяет несколько эскизов — проведите курсором по композиции, чтобы увидеть каждую мини-картину отдельно.";
 
-function CollectionGrid({
-  items,
-  priorityFirst,
-}: {
-  items: PictureItem[];
-  priorityFirst: boolean;
-}) {
-  return (
-    <ul className="grid grid-cols-1 gap-14 overflow-visible sm:grid-cols-2 sm:gap-16 lg:grid-cols-3 lg:gap-12">
-      {items.map((item, index) => (
-        <li key={item.id} className="min-w-0 overflow-visible py-2">
-          <FramedPicture
-            src={item.src}
-            alt={item.alt}
-            aspectRatio={item.aspectRatio}
-            priority={priorityFirst && index === 0}
-          />
-        </li>
-      ))}
-    </ul>
-  );
+/** Заголовок серии над блоком: из title общей композиции или часть alt до « — ». */
+function seriesHeading(main: PictureItem, meta?: WorkMeta): string {
+  const raw = meta?.title?.trim() || main.alt;
+  const sep = " — ";
+  const i = raw.indexOf(sep);
+  return i > 0 ? raw.slice(0, i).trim() : raw;
 }
-
-type Hotspot = { x: number; y: number; w: number; h: number };
-
-const COLLECTION_HOTSPOTS: Record<string, Hotspot> = {
-  "collection-one": { x: 40, y: 7, w: 14, h: 15 },
-  "collection-two": { x: 35, y: 25, w: 22, h: 15 },
-  "collection-three": { x: 80, y: 44, w: 22, h: 15 },
-  "collection-four": { x: 1, y: 43, w: 21, h: 14 },
-  "collection-five": { x: 24, y: 48, w: 21, h: 17 },
-};
 
 function CollectionInteractive({
   main,
   related,
+  collectionMeta = {},
 }: {
   main: PictureItem | null;
   related: PictureItem[];
+  collectionMeta?: Record<string, WorkMeta>;
 }) {
-  const [activeId, setActiveId] = useState<string>(
-    related[0]?.id ?? "collection-one",
-  );
+  const [activeId, setActiveId] = useState<string>(related[0]?.id ?? "");
   const rightPreviewRef = useRef<HTMLDivElement>(null);
-  if (!main) return null;
+
+  useEffect(() => {
+    if (related.length === 0) return;
+    if (!related.some((r) => r.id === activeId)) {
+      setActiveId(related[0]!.id);
+    }
+  }, [related, activeId]);
+
   const activePicture =
     related.find((item) => item.id === activeId) ?? related[0] ?? null;
-  const activeHotspot = COLLECTION_HOTSPOTS[activeId] ?? null;
-  const activeIdx = Math.max(
-    0,
-    related.findIndex((item) => item.id === activeId),
-  );
 
   useLayoutEffect(() => {
     const el = rightPreviewRef.current;
@@ -156,6 +77,17 @@ function CollectionInteractive({
       },
     );
   }, [activeId]);
+
+  if (!main) return null;
+
+  const activeHotspot = activePicture?.hotspot ?? null;
+  const activeIdx = Math.max(
+    0,
+    related.findIndex((item) => item.id === activeId),
+  );
+  const activeFragmentMeta = activePicture
+    ? collectionMeta[activePicture.id]
+    : undefined;
 
   return (
     <div
@@ -193,6 +125,7 @@ function CollectionInteractive({
               style={{ aspectRatio: main.aspectRatio ?? "4/3" }}
             >
               <Image
+                key={`${main.id}:${main.src}`}
                 src={main.src}
                 alt={main.alt}
                 fill
@@ -204,12 +137,13 @@ function CollectionInteractive({
                 aria-hidden
               />
               {related.map((item) => {
-                const hs = COLLECTION_HOTSPOTS[item.id];
+                const hs = item.hotspot;
                 if (!hs) return null;
                 return (
                   <button
                     key={item.id}
                     type="button"
+                    onClick={() => setActiveId(item.id)}
                     onMouseEnter={() => setActiveId(item.id)}
                     onFocus={() => setActiveId(item.id)}
                     aria-label={`Показать ${item.alt}`}
@@ -248,11 +182,24 @@ function CollectionInteractive({
                 Фрагмент
               </p>
               <p
-                className="max-w-[20rem] text-base font-medium leading-snug tracking-tight text-zinc-900 dark:text-zinc-100"
+                className="max-w-[22rem] text-lg font-semibold leading-snug tracking-tight text-zinc-900 dark:text-zinc-100"
                 aria-live="polite"
               >
-                {activePicture?.alt ?? "Выберите область слева"}
+                {activeFragmentMeta?.title ??
+                  activePicture?.alt ??
+                  "Выберите область слева"}
               </p>
+              {activeFragmentMeta?.medium ? (
+                <p className="text-xs font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+                  {activeFragmentMeta.medium}
+                </p>
+              ) : null}
+              {activeFragmentMeta?.text &&
+              activeFragmentMeta.text !== activeFragmentMeta.title ? (
+                <p className="mt-1 max-w-[22rem] text-sm leading-relaxed text-zinc-600 line-clamp-4 dark:text-zinc-400">
+                  {activeFragmentMeta.text}
+                </p>
+              ) : null}
             </div>
             <span className="shrink-0 tabular-nums rounded-lg border border-zinc-200/90 bg-white/55 px-2 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-600/80 dark:bg-zinc-800/60 dark:text-zinc-300">
               {activeIdx + 1}
@@ -264,7 +211,9 @@ function CollectionInteractive({
           <figure className="relative w-full max-w-[min(100%,28rem)] shrink-0 overflow-hidden rounded-2xl border border-zinc-300/70 bg-gradient-to-b from-white/90 to-pastel-gray-50/80 p-1 shadow-[0_16px_36px_-22px_rgba(15,23,42,0.4)] dark:border-zinc-600/75 dark:from-zinc-800/90 dark:to-zinc-950/80 dark:shadow-[0_16px_36px_-22px_rgba(0,0,0,0.55)] sm:p-1.5 lg:max-w-none">
             <div
               className="relative w-full overflow-hidden rounded-[0.85rem] ring-1 ring-inset ring-zinc-900/5 dark:ring-white/10"
-              style={{ aspectRatio: "1/1" }}
+              style={{
+                aspectRatio: activePicture?.aspectRatio ?? "1/1",
+              }}
             >
               {activePicture ? (
                 <div
@@ -272,7 +221,7 @@ function CollectionInteractive({
                   className="relative h-full w-full"
                 >
                   <Image
-                    key={activePicture.src}
+                    key={`${activePicture.id}:${activePicture.src}`}
                     src={activePicture.src}
                     alt={activePicture.alt}
                     fill
@@ -322,20 +271,46 @@ function CollectionInteractive({
   );
 }
 
-export function PicturesGallery() {
+export function PicturesGallery({
+  works: worksProp,
+  collection: collectionProp,
+  workMeta: workMetaProp,
+  collectionMeta: collectionMetaProp,
+}: PicturesGalleryProps = {}) {
+  const works = worksProp ?? FALLBACK_WORKS;
+  const collectionItems = collectionProp ?? FALLBACK_COLLECTION;
+  const workMeta = workMetaProp ?? STATIC_WORKS_META;
+  const collectionMeta = collectionMetaProp ?? {};
+
+  const collectionSeries = useMemo(
+    () => partitionCollectionSeries(collectionItems),
+    [collectionItems],
+  );
+
+  const [collectionSlideIdx, setCollectionSlideIdx] = useState(0);
+  useEffect(() => {
+    setCollectionSlideIdx((i) => {
+      if (collectionSeries.length === 0) return 0;
+      return Math.min(Math.max(i, 0), collectionSeries.length - 1);
+    });
+  }, [collectionSeries.length]);
+
+  const activeCollectionSlide =
+    collectionSeries[collectionSlideIdx] ?? collectionSeries[0] ?? null;
+
   const rootRef = useRef<HTMLElement>(null);
   const noteRef = useRef<HTMLElement>(null);
   const textLineRefs = useRef<(HTMLParagraphElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const activeWork = WORKS[activeIndex] ?? WORKS[0];
+  const activeWork = works[activeIndex] ?? works[0];
   const activeMeta = useMemo(
     () =>
-      WORKS_META[activeWork?.id] ?? {
+      workMeta[activeWork?.id] ?? {
         title: activeWork?.alt ?? "Работа",
         medium: "Масло, холст",
         text: "Описание будет добавлено позже.",
       },
-    [activeWork],
+    [activeWork, workMeta],
   );
   const activeTextLines = useMemo(
     () =>
@@ -434,13 +409,13 @@ export function PicturesGallery() {
               <button
                 type="button"
                 onClick={() =>
-                  setActiveIndex((v) => (v - 1 + WORKS.length) % WORKS.length)
+                  setActiveIndex((v) => (v - 1 + works.length) % works.length)
                 }
                 className="rounded-md border border-zinc-300 bg-zinc-100/80 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800/70"
               >
                 Назад
               </button>
-              {WORKS.map((w, idx) => (
+              {works.map((w, idx) => (
                 <button
                   key={w.id}
                   type="button"
@@ -451,12 +426,12 @@ export function PicturesGallery() {
                       : "rounded-md border border-zinc-300 bg-zinc-100/80 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800/70"
                   }
                 >
-                  {WORKS_META[w.id]?.title ?? w.id}
+                  {workMeta[w.id]?.title ?? w.id}
                 </button>
               ))}
               <button
                 type="button"
-                onClick={() => setActiveIndex((v) => (v + 1) % WORKS.length)}
+                onClick={() => setActiveIndex((v) => (v + 1) % works.length)}
                 className="rounded-md border border-zinc-300 bg-zinc-100/80 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800/70"
               >
                 Вперёд
@@ -493,18 +468,107 @@ export function PicturesGallery() {
               className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-[1.65rem] dark:text-zinc-50"
               id="collection-heading"
             >
-              Черновики личности
+              {activeCollectionSlide
+                ? seriesHeading(
+                    activeCollectionSlide.main,
+                    collectionMeta[activeCollectionSlide.main.id],
+                  )
+                : "Коллекция"}
             </h4>
             <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Одна сцена на мольберте объединяет несколько эскизов — проведите курсором по
-              композиции, чтобы увидеть каждую мини-картину отдельно.
+              {(activeCollectionSlide &&
+                collectionMeta[activeCollectionSlide.main.id]?.text?.trim()) ||
+                COLLECTION_SECTION_INTRO}
             </p>
             <div
               className="mx-auto h-px w-12 bg-gradient-to-r from-transparent via-zinc-400/70 to-transparent dark:via-zinc-500/60"
               aria-hidden
             />
           </header>
-          <CollectionInteractive main={COLLECTION_MAIN} related={COLLECTION_RELATED} />
+          {activeCollectionSlide ? (
+            <div className="space-y-6">
+              {collectionSeries.length > 1 ? (
+                <div
+                  className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
+                  role="navigation"
+                  aria-label="Выбор коллекции"
+                >
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCollectionSlideIdx(
+                          (i) =>
+                            (i - 1 + collectionSeries.length) %
+                            collectionSeries.length,
+                        )
+                      }
+                      className="rounded-full border border-zinc-300/90 bg-white/80 px-3 py-1.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900/70 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      Назад
+                    </button>
+                    <span className="min-w-[4.5rem] tabular-nums text-center text-sm font-medium text-zinc-600 dark:text-zinc-300">
+                      {collectionSlideIdx + 1} / {collectionSeries.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCollectionSlideIdx(
+                          (i) => (i + 1) % collectionSeries.length,
+                        )
+                      }
+                      className="rounded-full border border-zinc-300/90 bg-white/80 px-3 py-1.5 text-sm font-medium text-zinc-800 shadow-sm transition hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900/70 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                      Вперёд
+                    </button>
+                  </div>
+                  <div
+                    className="flex flex-wrap justify-center gap-2"
+                    role="tablist"
+                    aria-label="Коллекции"
+                  >
+                    {collectionSeries.map((slide, idx) => {
+                      const label = seriesHeading(
+                        slide.main,
+                        collectionMeta[slide.main.id],
+                      );
+                      return (
+                        <button
+                          key={slide.main.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={idx === collectionSlideIdx}
+                          onClick={() => setCollectionSlideIdx(idx)}
+                          className={
+                            idx === collectionSlideIdx
+                              ? "max-w-[10rem] truncate rounded-full border border-zinc-900 bg-zinc-900 px-3 py-1 text-xs font-medium text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
+                              : "max-w-[10rem] truncate rounded-full border border-zinc-300/90 bg-white/70 px-3 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                          }
+                          title={label}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+              <CollectionInteractive
+                key={activeCollectionSlide.main.id}
+                main={activeCollectionSlide.main}
+                related={activeCollectionSlide.related}
+                collectionMeta={collectionMeta}
+              />
+            </div>
+          ) : collectionItems.some((i) => i.section === "collection") ? (
+            <p className="mx-auto max-w-xl text-center text-sm text-zinc-600 dark:text-zinc-400">
+              Нужны опубликованная «общая композиция» и хотя бы один фрагмент с hotspot.
+              Несколько серий: задайте в админке одинаковый{" "}
+              <span className="font-medium">ключ серии</span> у композиции и всех её
+              фрагментов — тогда порядок в списке не важен. Иначе — в списке должны идти
+              «фрагменты → композиция» или «композиция → фрагменты» для каждой серии.
+            </p>
+          ) : null}
         </div>
       </div>
 

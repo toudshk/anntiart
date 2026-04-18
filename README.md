@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Anntiart
 
-## Getting Started
+Сайт-галерея на `Next.js` с базовой backend-основой:
 
-First, run the development server:
+- `Postgres + Prisma` для данных
+- `NextAuth (Credentials)` для входа в админку
+- admin API для работ (`/api/admin/artworks`)
+
+## Быстрый запуск
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Заполните `.env`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `DATABASE_URL` — если пароль содержит `^`, `#`, `@`, `%` и т.п., закодируйте их в URL (например в PowerShell: `[uri]::EscapeDataString('ваш_пароль')`) и подставьте в строку `postgresql://USER:ПАРОЛЬ@HOST:5432/DB`
+- `NEXTAUTH_URL`
+- `NEXTAUTH_SECRET`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD_HASH`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Хэш пароля:
 
-## Learn More
+```bash
+bun run auth:hash -- "your-password"
+```
 
-To learn more about Next.js, take a look at the following resources:
+В `.env` каждый символ `$` в bcrypt-строке нужно экранировать как `\$` (иначе Next.js подставит «переменные» и хеш сломается).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Подготовить БД:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+bun run prisma:generate
+bun run prisma:push
+```
 
-## Deploy on Vercel
+Запуск:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+bun run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Админка
+
+После входа (`/admin/login`) открывается **`/admin`**: список работ, добавление и редактирование.
+
+Главная страница лендинга подтягивает **опубликованные** работы из БД. Если в какой‑то секции (`works` / `collection`) нет ни одной опубликованной записи, для неё используется прежний статический набор из `view/constants/pictures.ts`.
+
+**Коллекция:** у каждой записи секции `collection` в форме задаются **ширина и высота (см)** — по ним считается aspect ratio для отображения. Для **общей композиции** включите «Общая композиция»; для **фрагментов** дополнительно укажите hotspot (x, y, w, h в процентах от композиции).
+
+## API
+
+- `GET /api/admin/artworks` — список (только admin)
+- `POST /api/admin/artworks` — создать (только admin)
+- `PATCH /api/admin/artworks/[slug]` — обновить (только admin)
+- `DELETE /api/admin/artworks/[slug]` — удалить (только admin)
+- `POST /api/admin/upload` — загрузка изображения, поле формы `file` (multipart), ответ `{ "url": "/uploads/artworks/…" }` (только admin; файлы пишутся в `public/uploads/artworks`)
+- `/api/auth/*` — NextAuth
+
+После изменения `schema.prisma` снова выполните `bun run prisma:push` (или миграцию).
+
+## Prisma Studio
+
+```bash
+bun run prisma:studio
+```
