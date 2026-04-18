@@ -6,7 +6,7 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "bun run next dev --turbopack",
-    "build": "bun run next build",
+    "build": "prisma generate && next build",
     "start": "bun run next start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",

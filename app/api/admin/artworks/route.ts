@@ -1,4 +1,3 @@
-import { ArtworkSection, ArtworkStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { createArtworkSchema } from "view/lib/artwork-payload";
@@ -71,13 +70,12 @@ export async function POST(req: Request) {
         isCollectionComposite: data.isCollectionComposite,
         sortOrder: data.sortOrder,
         collectionSeriesKey:
-          data.section === ArtworkSection.collection && data.collectionSeriesKey
+          data.section === "collection" && data.collectionSeriesKey
             ? data.collectionSeriesKey
             : null,
         ...hotspotData,
         artistId: artist.id,
-        publishedAt:
-          data.status === ArtworkStatus.published ? new Date() : null,
+        publishedAt: data.status === "published" ? new Date() : null,
         images: {
           create: [{ url: data.imageUrl, sortOrder: 0 }],
         },
