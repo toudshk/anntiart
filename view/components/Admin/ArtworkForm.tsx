@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
 
 import { aspectRatioFromCm } from "view/lib/aspect-ratio";
 import { slugFromTitle } from "view/lib/slug-from-title";
@@ -39,6 +40,8 @@ export type ArtworkFormInitial = {
   medium: string;
   widthCm: number | null;
   heightCm: number | null;
+  /** null — цена на сайте не показывается */
+  priceRub: number | null;
   section: ArtworkSection;
   status: ArtworkStatus;
   aspectRatio: string;
@@ -60,6 +63,7 @@ const emptyCreate = (): ArtworkFormInitial => ({
   medium: "",
   widthCm: null,
   heightCm: null,
+  priceRub: null,
   section: "works",
   status: "published",
   aspectRatio: "",
@@ -122,7 +126,6 @@ export function ArtworkForm(props: Props) {
   const [composites, setComposites] = useState<AdminArtworkSummary[]>([]);
   const [compositionPickSlug, setCompositionPickSlug] = useState("");
   const [manualCompositionUrl, setManualCompositionUrl] = useState("");
-  const slugEditedByUserRef = useRef(false);
   const autoSeriesKeyDoneRef = useRef(false);
 
   const {
@@ -171,8 +174,8 @@ export function ArtworkForm(props: Props) {
       ? createPreset.collectionSeriesKey.trim()
       : "";
 
-  /** Slug только из названия, без ручного поля */
-  const hideCreateSlugUi =
+  /** Создание: описание = название (фрагмент / новая коллекция с авто-ключом). */
+  const hideCreateDescriptionUi =
     props.mode === "create" &&
     (isFragmentCreate || (wantAutoSeriesKey && isCollection));
 
@@ -195,19 +198,23 @@ export function ArtworkForm(props: Props) {
 
   useEffect(() => {
     if (props.mode !== "create") return;
-    if (!values.slug.trim()) slugEditedByUserRef.current = false;
-    if (slugEditedByUserRef.current) return;
     const next = slugFromTitle(values.title);
     if (next === values.slug) return;
     setValue("slug", next, { shouldValidate: true, shouldDirty: false });
   }, [props.mode, setValue, values.title, values.slug]);
 
+  /** Alt на сайте = название (в создании поля alt нет). */
   useEffect(() => {
-    if (!hideCreateSlugUi) return;
+    if (props.mode !== "create") return;
     const t = values.title.trim();
     setValue("alt", t, { shouldDirty: false });
+  }, [props.mode, setValue, values.title]);
+
+  useEffect(() => {
+    if (!hideCreateDescriptionUi) return;
+    const t = values.title.trim();
     setValue("description", t, { shouldDirty: false });
-  }, [hideCreateSlugUi, setValue, values.title]);
+  }, [hideCreateDescriptionUi, setValue, values.title]);
 
   useEffect(() => {
     if (!wantAutoSeriesKey || !isCollection) return;
@@ -270,11 +277,14 @@ export function ArtworkForm(props: Props) {
         const payload = {
           slug: values.slug.trim(),
           title: values.title.trim(),
-          alt: values.alt.trim(),
+          alt: values.title.trim(),
           description: values.description.trim(),
           medium: values.medium.trim(),
-          widthCm: isColl ? undefined : values.widthCm ?? undefined,
-          heightCm: isColl ? undefined : values.heightCm ?? undefined,
+          widthCm: undefined,
+          heightCm: undefined,
+          ...(values.priceRub != null
+            ? { priceRub: values.priceRub }
+            : {}),
           section: values.section,
           status: values.status,
           aspectRatio: values.aspectRatio.trim() || undefined,
@@ -303,6 +313,7 @@ export function ArtworkForm(props: Props) {
         medium: values.medium.trim(),
         widthCm: isColl ? null : values.widthCm,
         heightCm: isColl ? null : values.heightCm,
+        priceRub: values.priceRub,
         section: values.section,
         status: values.status,
         aspectRatio: values.aspectRatio.trim() || null,
@@ -323,7 +334,7 @@ export function ArtworkForm(props: Props) {
       router.push("/admin");
       router.refresh();
     } catch (err) {
-      setError(apiErrorMessage(err));
+      toast.error(apiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -340,7 +351,7 @@ export function ArtworkForm(props: Props) {
       router.push("/admin");
       router.refresh();
     } catch (err) {
-      setError(apiErrorMessage(err));
+      toast.error(apiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -358,7 +369,7 @@ export function ArtworkForm(props: Props) {
         setValue("imageUrl", url, { shouldDirty: true, shouldValidate: true });
       }
     } catch (err) {
-      setError(apiErrorMessage(err));
+      toast.error(apiErrorMessage(err));
     } finally {
       setUploadBusy(false);
     }
@@ -367,7 +378,6 @@ export function ArtworkForm(props: Props) {
   const fieldClass =
     "mt-1 w-full rounded-xl border border-zinc-300/90 bg-white/95 px-3.5 py-2.5 text-sm text-zinc-900 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset] outline-none transition focus:border-zinc-400 focus:ring-2 focus:ring-zinc-300/65 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:focus:border-zinc-500 dark:focus:ring-zinc-700/60";
   const labelClass = "block text-sm font-medium text-zinc-800 dark:text-zinc-200";
-  const slugRegister = register("slug", { required: true });
 
   return (
     <form
@@ -419,53 +429,36 @@ export function ArtworkForm(props: Props) {
         />
       </label>
 
-      {props.mode === "create" && hideCreateSlugUi ? (
-        <input type="hidden" {...register("slug", { required: true })} />
-      ) : props.mode === "create" ? (
+      {props.mode === "create" ? (
+        <>
+          <input type="hidden" {...register("slug", { required: true })} />
+          <input type="hidden" {...register("alt", { required: true })} />
+        </>
+      ) : null}
+
+      {props.mode === "edit" ? (
         <label className={labelClass}>
-          <span>Slug (URL-id)</span>
-          <p className="mt-0.5 text-xs font-normal leading-snug text-zinc-500 dark:text-zinc-400">
-            Генерируется из названия (транслит); при необходимости отредактируйте вручную.
-          </p>
+          <span>Alt</span>
           <input
             required
-            className={`${fieldClass} font-mono`}
-            placeholder="dar-nochi"
-            {...slugRegister}
-            onChange={(e) => {
-              slugEditedByUserRef.current = true;
-              slugRegister.onChange(e);
-            }}
+            className={fieldClass}
+            {...register("alt", { required: true })}
           />
         </label>
       ) : null}
 
-      {hideCreateSlugUi ? (
-        <>
-          <input type="hidden" {...register("alt", { required: true })} />
-          <input type="hidden" {...register("description", { required: true })} />
-        </>
+      {props.mode === "create" && hideCreateDescriptionUi ? (
+        <input type="hidden" {...register("description", { required: true })} />
       ) : (
-        <>
-          <label className={labelClass}>
-            <span>Alt</span>
-            <input
-              required
-              className={fieldClass}
-              {...register("alt", { required: true })}
-            />
-          </label>
-
-          <label className={labelClass}>
-            <span>Описание (текст на сайте)</span>
-            <textarea
-              required
-              rows={5}
-              className={fieldClass}
-              {...register("description", { required: true })}
-            />
-          </label>
-        </>
+        <label className={labelClass}>
+          <span>Описание (текст на сайте)</span>
+          <textarea
+            required
+            rows={5}
+            className={fieldClass}
+            {...register("description", { required: true })}
+          />
+        </label>
       )}
 
       <label className={labelClass}>
@@ -484,7 +477,7 @@ export function ArtworkForm(props: Props) {
           Параметры полотна
         </h2>
 
-      {!isCollection ? (
+      {props.mode === "edit" && !isCollection ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className={labelClass}>
             <span>Ширина, см</span>
@@ -510,6 +503,27 @@ export function ArtworkForm(props: Props) {
           </label>
         </div>
       ) : null}
+
+      <label className={labelClass}>
+        <span>Цена, ₽</span>
+        <p className="mt-0.5 text-xs font-normal leading-snug text-zinc-500 dark:text-zinc-400">
+          Пустое поле — цена на лендинге не показывается.
+        </p>
+        <input
+          type="number"
+          min={0}
+          step={1}
+          className={fieldClass}
+          placeholder="например 45000"
+          {...register("priceRub", {
+            setValueAs: (v) => {
+              if (v === "" || v === undefined || v === null) return null;
+              const n = Number(v);
+              return Number.isFinite(n) ? Math.trunc(n) : null;
+            },
+          })}
+        />
+      </label>
 
       {lockSectionField ? <input type="hidden" {...register("section")} /> : null}
 
@@ -559,7 +573,9 @@ export function ArtworkForm(props: Props) {
           Aspect ratio
           {isCollection
             ? " (опционально; если пусто — на сайте 2/3)"
-            : " (опционально, иначе из см)"}
+            : props.mode === "create"
+              ? " (опционально)"
+              : " (опционально, иначе из см)"}
         </span>
         <input
           className={fieldClass}

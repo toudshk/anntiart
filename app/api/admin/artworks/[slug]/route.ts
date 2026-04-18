@@ -6,6 +6,7 @@ import {
   patchArtworkSchema,
 } from "view/lib/artwork-payload";
 import { prisma } from "view/lib/prisma";
+import { prismaClientErrorToHttp } from "view/lib/prisma-http-error";
 import { requireAdminResponse } from "view/lib/require-admin";
 
 type RouteCtx = { params: Promise<{ slug: string }> };
@@ -92,73 +93,90 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
     }
   }
 
-  const updated = await prisma.artwork.update({
-    where: { slug },
-    data: {
-      title: body.title ?? undefined,
-      alt: body.alt ?? undefined,
-      description: body.description ?? undefined,
-      medium: body.medium ?? undefined,
-      widthCm: body.widthCm !== undefined ? body.widthCm : undefined,
-      heightCm: body.heightCm !== undefined ? body.heightCm : undefined,
-      priceRub: body.priceRub !== undefined ? body.priceRub : undefined,
-      section: body.section ?? undefined,
-      status: body.status ?? undefined,
-      aspectRatio:
-        body.aspectRatio !== undefined ? body.aspectRatio : undefined,
-      isCollectionComposite:
-        body.isCollectionComposite !== undefined
-          ? body.isCollectionComposite
-          : undefined,
-      hotspotX: clearHotspots
-        ? null
-        : body.hotspotX !== undefined
-          ? body.hotspotX
-          : undefined,
-      hotspotY: clearHotspots
-        ? null
-        : body.hotspotY !== undefined
-          ? body.hotspotY
-          : undefined,
-      hotspotW: clearHotspots
-        ? null
-        : body.hotspotW !== undefined
-          ? body.hotspotW
-          : undefined,
-      hotspotH: clearHotspots
-        ? null
-        : body.hotspotH !== undefined
-          ? body.hotspotH
-          : undefined,
-      sortOrder: body.sortOrder ?? undefined,
-      collectionSeriesKey:
-        body.collectionSeriesKey !== undefined
-          ? body.collectionSeriesKey
-          : undefined,
-      publishedAt,
-    },
-    include: {
-      artist: { select: { id: true, slug: true, name: true } },
-      images: { orderBy: { sortOrder: "asc" } },
-    },
-  });
-
-  if (body.imageUrl) {
-    await prisma.artworkImage.deleteMany({ where: { artworkId: updated.id } });
-    await prisma.artworkImage.create({
-      data: { artworkId: updated.id, url: body.imageUrl, sortOrder: 0 },
+  try {
+    const updated = await prisma.artwork.update({
+      where: { slug },
+      data: {
+        title: body.title ?? undefined,
+        alt: body.alt ?? undefined,
+        description: body.description ?? undefined,
+        medium: body.medium ?? undefined,
+        widthCm: body.widthCm !== undefined ? body.widthCm : undefined,
+        heightCm: body.heightCm !== undefined ? body.heightCm : undefined,
+        priceRub: body.priceRub !== undefined ? body.priceRub : undefined,
+        section: body.section ?? undefined,
+        status: body.status ?? undefined,
+        aspectRatio:
+          body.aspectRatio !== undefined ? body.aspectRatio : undefined,
+        isCollectionComposite:
+          body.isCollectionComposite !== undefined
+            ? body.isCollectionComposite
+            : undefined,
+        hotspotX: clearHotspots
+          ? null
+          : body.hotspotX !== undefined
+            ? body.hotspotX
+            : undefined,
+        hotspotY: clearHotspots
+          ? null
+          : body.hotspotY !== undefined
+            ? body.hotspotY
+            : undefined,
+        hotspotW: clearHotspots
+          ? null
+          : body.hotspotW !== undefined
+            ? body.hotspotW
+            : undefined,
+        hotspotH: clearHotspots
+          ? null
+          : body.hotspotH !== undefined
+            ? body.hotspotH
+            : undefined,
+        sortOrder: body.sortOrder ?? undefined,
+        collectionSeriesKey:
+          body.collectionSeriesKey !== undefined
+            ? body.collectionSeriesKey
+            : undefined,
+        publishedAt,
+      },
+      include: {
+        artist: { select: { id: true, slug: true, name: true } },
+        images: { orderBy: { sortOrder: "asc" } },
+      },
     });
+
+    if (body.imageUrl) {
+      await prisma.artworkImage.deleteMany({
+        where: { artworkId: updated.id },
+      });
+      await prisma.artworkImage.create({
+        data: { artworkId: updated.id, url: body.imageUrl, sortOrder: 0 },
+      });
+    }
+
+    const fresh = await prisma.artwork.findUnique({
+      where: { slug },
+      include: {
+        artist: { select: { id: true, slug: true, name: true } },
+        images: { orderBy: { sortOrder: "asc" } },
+      },
+    });
+
+    return NextResponse.json({ data: fresh });
+  } catch (e) {
+    const mapped = prismaClientErrorToHttp(e);
+    if (mapped) {
+      return NextResponse.json({ error: mapped.error }, { status: mapped.status });
+    }
+    console.error("[api/admin/artworks PATCH]", e);
+    return NextResponse.json(
+      {
+        error:
+          "Не удалось сохранить изменения. Попробуйте позже или проверьте данные.",
+      },
+      { status: 500 },
+    );
   }
-
-  const fresh = await prisma.artwork.findUnique({
-    where: { slug },
-    include: {
-      artist: { select: { id: true, slug: true, name: true } },
-      images: { orderBy: { sortOrder: "asc" } },
-    },
-  });
-
-  return NextResponse.json({ data: fresh });
 }
 
 export async function DELETE(_req: Request, ctx: RouteCtx) {
@@ -168,8 +186,12 @@ export async function DELETE(_req: Request, ctx: RouteCtx) {
   const { slug } = await ctx.params;
   try {
     await prisma.artwork.delete({ where: { slug } });
-  } catch {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  } catch (e) {
+    const mapped = prismaClientErrorToHttp(e);
+    if (mapped) {
+      return NextResponse.json({ error: mapped.error }, { status: mapped.status });
+    }
+    return NextResponse.json({ error: "Запись не найдена." }, { status: 404 });
   }
   return NextResponse.json({ ok: true });
 }

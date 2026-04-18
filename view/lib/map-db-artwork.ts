@@ -52,5 +52,6 @@ export function dbArtworkToWorkMeta(row: Artwork): WorkMeta {
     title: row.title,
     medium: row.medium,
     text: row.description,
+    priceRub: row.priceRub,
   };
 }

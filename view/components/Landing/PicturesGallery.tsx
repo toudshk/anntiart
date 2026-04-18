@@ -1,5 +1,6 @@
 "use client";
 
+import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -12,6 +13,7 @@ import {
 import type { WorkMeta } from "view/constants/works-meta";
 import { STATIC_WORKS_META } from "view/constants/works-meta";
 import { partitionCollectionSeries } from "view/lib/collection-series";
+import { formatPriceRub } from "view/lib/format-price";
 
 import { WorksGallery3D } from "./WorksGallery3D";
 
@@ -32,6 +34,53 @@ export type PicturesGalleryProps = {
 const COLLECTION_SECTION_INTRO =
   "Одна сцена на мольберте объединяет несколько эскизов — проведите курсором по композиции, чтобы увидеть каждую мини-картину отдельно.";
 
+function GalleryWorkNav({
+  works,
+  activeIndex,
+  setActiveIndex,
+  workMeta,
+}: {
+  works: PictureItem[];
+  activeIndex: number;
+  setActiveIndex: Dispatch<SetStateAction<number>>;
+  workMeta: Record<string, WorkMeta>;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-center justify-end gap-1.5">
+      <button
+        type="button"
+        onClick={() =>
+          setActiveIndex((v) => (v - 1 + works.length) % works.length)
+        }
+        className="rounded-md border border-zinc-300 bg-zinc-100/80 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800/70"
+      >
+        Назад
+      </button>
+      {works.map((w, idx) => (
+        <button
+          key={w.id}
+          type="button"
+          onClick={() => setActiveIndex(idx)}
+          className={
+            idx === activeIndex
+              ? "rounded-md border border-zinc-900 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
+              : "rounded-md border border-zinc-300 bg-zinc-100/80 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800/70"
+          }
+        >
+          {workMeta[w.id]?.title ?? w.id}
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={() => setActiveIndex((v) => (v + 1) % works.length)}
+        className="rounded-md border border-zinc-300 bg-zinc-100/80 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800/70"
+      >
+        Вперёд
+      </button>
+    </div>
+  );
+}
+
 /** Заголовок серии над блоком: из title общей композиции или часть alt до « — ». */
 function seriesHeading(main: PictureItem, meta?: WorkMeta): string {
   const raw = meta?.title?.trim() || main.alt;
@@ -50,7 +99,6 @@ function CollectionInteractive({
   collectionMeta?: Record<string, WorkMeta>;
 }) {
   const [activeId, setActiveId] = useState<string>(related[0]?.id ?? "");
-  const rightPreviewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (related.length === 0) return;
@@ -61,22 +109,6 @@ function CollectionInteractive({
 
   const activePicture =
     related.find((item) => item.id === activeId) ?? related[0] ?? null;
-
-  useLayoutEffect(() => {
-    const el = rightPreviewRef.current;
-    if (!el) return;
-    // Не анимируем transform/filter на родителе с next/image + fill — в части браузеров
-    // слой с картинкой перестаёт композиться и остаётся «белый квадрат».
-    gsap.fromTo(
-      el,
-      { opacity: 0.4 },
-      {
-        opacity: 1,
-        duration: 0.38,
-        ease: "power2.out",
-      },
-    );
-  }, [activeId]);
 
   if (!main) return null;
 
@@ -91,7 +123,7 @@ function CollectionInteractive({
 
   return (
     <div
-      className="relative mx-auto max-w-6xl overflow-hidden rounded-[1.75rem] border border-zinc-200/90 bg-gradient-to-br from-white/85 via-pastel-gray-50/65 to-pastel-gray-100/55 p-6 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.28),inset_0_1px_0_rgba(255,255,255,0.65)] sm:p-8 dark:border-zinc-700/80 dark:from-zinc-900/75 dark:via-zinc-900/55 dark:to-zinc-950/45 dark:shadow-[0_22px_48px_-28px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]"
+      className="relative mx-auto max-w-6xl overflow-hidden rounded-[1.75rem] border border-zinc-200/90 bg-gradient-to-br from-white/85 via-pastel-gray-50/65 to-pastel-gray-100/55 px-4 py-4 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.28),inset_0_1px_0_rgba(255,255,255,0.65)] max-lg:max-h-[100dvh] max-lg:overflow-x-hidden max-lg:overflow-y-auto max-lg:overscroll-y-contain sm:px-8 sm:py-8 dark:border-zinc-700/80 dark:from-zinc-900/75 dark:via-zinc-900/55 dark:to-zinc-950/45 dark:shadow-[0_22px_48px_-28px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]"
       aria-labelledby="collection-interactive-label"
     >
       <div
@@ -108,20 +140,20 @@ function CollectionInteractive({
         увеличенный фрагмент.
       </p>
 
-      <div className="relative mx-auto grid w-full max-w-6xl grid-cols-1 items-stretch gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10 lg:gap-y-6">
-        <div className="flex min-w-0 flex-col gap-3">
+      <div className="relative mx-auto grid w-full min-h-0 max-w-6xl grid-cols-1 items-stretch gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-10 lg:gap-y-6">
+        <div className="flex min-h-0 min-w-0 flex-col gap-2 lg:gap-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
               Общая композиция
             </p>
             <span className="rounded-full border border-zinc-200/90 bg-white/60 px-2.5 py-0.5 text-[0.65rem] font-medium text-zinc-600 shadow-sm dark:border-zinc-600/80 dark:bg-zinc-800/70 dark:text-zinc-300">
-              Наведите на работы
+              Нажмите на работы
             </span>
           </div>
 
-          <figure className="group relative overflow-hidden rounded-2xl border border-zinc-300/75 bg-zinc-100/40 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.35)] ring-1 ring-inset ring-white/50 dark:border-zinc-600/70 dark:bg-zinc-950/35 dark:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.55)] dark:ring-white/5">
+          <figure className="group relative mx-auto max-h-[min(46dvh,72svh)] w-full overflow-hidden rounded-2xl border border-zinc-300/75 bg-zinc-100/40 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.35)] ring-1 ring-inset ring-white/50 max-lg:max-w-full lg:max-h-none dark:border-zinc-600/70 dark:bg-zinc-950/35 dark:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.55)] dark:ring-white/5">
             <div
-              className="relative w-full cursor-pointer"
+              className="relative mx-auto w-full max-w-full cursor-pointer max-lg:max-h-[min(46dvh,72svh)]"
               style={{ aspectRatio: main.aspectRatio ?? "4/3" }}
             >
               <Image
@@ -175,14 +207,14 @@ function CollectionInteractive({
           </figure>
         </div>
 
-        <div className="flex min-w-0 flex-col justify-between gap-5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="space-y-1">
+        <div className="flex min-h-0 min-w-0 flex-col justify-between gap-3 lg:gap-5">
+          <div className="flex flex-wrap items-start justify-between gap-2 lg:gap-3">
+            <div className="min-w-0 space-y-1">
               <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                 Фрагмент
               </p>
               <p
-                className="max-w-[22rem] text-lg font-semibold leading-snug tracking-tight text-zinc-900 dark:text-zinc-100"
+                className="max-w-[22rem] text-base font-semibold leading-snug tracking-tight text-zinc-900 lg:text-lg dark:text-zinc-100"
                 aria-live="polite"
               >
                 {activeFragmentMeta?.title ??
@@ -194,9 +226,14 @@ function CollectionInteractive({
                   {activeFragmentMeta.medium}
                 </p>
               ) : null}
+              {activeFragmentMeta?.priceRub != null ? (
+                <p className="mt-1 text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
+                  {formatPriceRub(activeFragmentMeta.priceRub)}
+                </p>
+              ) : null}
               {activeFragmentMeta?.text &&
               activeFragmentMeta.text !== activeFragmentMeta.title ? (
-                <p className="mt-1 max-w-[22rem] text-sm leading-relaxed text-zinc-600 line-clamp-4 dark:text-zinc-400">
+                <p className="mt-1 max-w-[22rem] text-sm leading-relaxed text-zinc-600 line-clamp-2 lg:line-clamp-4 dark:text-zinc-400">
                   {activeFragmentMeta.text}
                 </p>
               ) : null}
@@ -208,18 +245,12 @@ function CollectionInteractive({
             </span>
           </div>
 
-          <figure className="relative w-full max-w-[min(100%,28rem)] shrink-0 overflow-hidden rounded-2xl border border-zinc-300/70 bg-gradient-to-b from-white/90 to-pastel-gray-50/80 p-1 shadow-[0_16px_36px_-22px_rgba(15,23,42,0.4)] dark:border-zinc-600/75 dark:from-zinc-800/90 dark:to-zinc-950/80 dark:shadow-[0_16px_36px_-22px_rgba(0,0,0,0.55)] sm:p-1.5 lg:max-w-none">
+          <figure className="relative mx-auto w-full max-w-[min(100%,28rem)] shrink-0 overflow-hidden rounded-2xl border border-zinc-300/70 bg-gradient-to-b from-white/90 to-pastel-gray-50/80 p-1 shadow-[0_16px_36px_-22px_rgba(15,23,42,0.4)] max-lg:max-w-full dark:border-zinc-600/75 dark:from-zinc-800/90 dark:to-zinc-950/80 dark:shadow-[0_16px_36px_-22px_rgba(0,0,0,0.55)] sm:p-1.5 lg:max-w-none">
             <div
-              className="relative w-full overflow-hidden rounded-[0.85rem] ring-1 ring-inset ring-zinc-900/5 dark:ring-white/10"
-              style={{
-                aspectRatio: activePicture?.aspectRatio ?? "1/1",
-              }}
+              className="relative aspect-square w-full overflow-hidden rounded-[0.85rem] ring-1 ring-inset ring-zinc-900/5 dark:ring-white/10"
             >
               {activePicture ? (
-                <div
-                  ref={rightPreviewRef}
-                  className="relative h-full w-full"
-                >
+                <div className="relative h-full w-full">
                   <Image
                     key={`${activePicture.id}:${activePicture.src}`}
                     src={activePicture.src}
@@ -236,7 +267,7 @@ function CollectionInteractive({
             </figcaption>
           </figure>
 
-          <div className="flex flex-col gap-3 border-t border-zinc-200/70 pt-4 dark:border-zinc-600/50">
+          <div className="flex flex-col gap-2 border-t border-zinc-200/70 pt-3 dark:border-zinc-600/50 lg:gap-3 lg:pt-4">
             <div
               className="flex flex-wrap items-center gap-2"
               aria-label="Фрагменты серии «Черновики личности»"
@@ -261,8 +292,8 @@ function CollectionInteractive({
               })}
             </div>
             <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Наведите курсор на фрагменты слева или выберите точку ниже — справа
-              откроется соответствующее полотно.
+              Нажмите на фрагмент слева или выберите точку ниже — справа откроется
+              соответствующее полотно.
             </p>
           </div>
         </div>
@@ -395,54 +426,35 @@ export function PicturesGallery({
         aria-hidden
       />
       <div className="relative z-10 mx-auto max-w-7xl overflow-x-visible overflow-y-visible pt-4">
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-8">
-          <div>
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-8">
+          <div className="order-1 w-full lg:order-none lg:col-start-2 lg:row-start-1">
+            <GalleryWorkNav
+              works={works}
+              activeIndex={activeIndex}
+              setActiveIndex={setActiveIndex}
+              workMeta={workMeta}
+            />
+          </div>
+          <div className="order-2 w-full lg:order-none lg:col-start-1 lg:row-span-2 lg:row-start-1">
             <WorksGallery3D item={activeWork ?? null} />
           </div>
           <aside
             data-art-note
             ref={noteRef}
-            className="text-zinc-700 dark:text-zinc-300"
+            className="order-3 text-zinc-700 dark:text-zinc-300 lg:order-none lg:col-start-2 lg:row-start-2"
             aria-label={`Описание картины ${activeMeta.title}`}
           >
-            <div className="mb-4 flex flex-wrap items-center justify-end gap-1.5">
-              <button
-                type="button"
-                onClick={() =>
-                  setActiveIndex((v) => (v - 1 + works.length) % works.length)
-                }
-                className="rounded-md border border-zinc-300 bg-zinc-100/80 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800/70"
-              >
-                Назад
-              </button>
-              {works.map((w, idx) => (
-                <button
-                  key={w.id}
-                  type="button"
-                  onClick={() => setActiveIndex(idx)}
-                  className={
-                    idx === activeIndex
-                      ? "rounded-md border border-zinc-900 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-                      : "rounded-md border border-zinc-300 bg-zinc-100/80 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800/70"
-                  }
-                >
-                  {workMeta[w.id]?.title ?? w.id}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setActiveIndex((v) => (v + 1) % works.length)}
-                className="rounded-md border border-zinc-300 bg-zinc-100/80 px-2.5 py-1 text-xs font-medium text-zinc-700 transition hover:bg-zinc-200/80 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-200 dark:hover:bg-zinc-800/70"
-              >
-                Вперёд
-              </button>
-            </div>
             <h3 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
               {activeMeta.title}
             </h3>
             <p className="mt-1 text-xs font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
               {activeMeta.medium}
             </p>
+            {activeMeta.priceRub != null ? (
+              <p className="mt-1 text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
+                {formatPriceRub(activeMeta.priceRub)}
+              </p>
+            ) : null}
             <div className="mt-2 space-y-1.5">
               {activeTextLines.map((line, idx) => (
                 <p

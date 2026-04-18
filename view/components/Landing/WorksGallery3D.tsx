@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import * as THREE from "three";
@@ -18,12 +18,6 @@ function parseAspectRatio(ar: string | undefined): number {
   const [a, b] = ar.split("/").map(Number);
   if (!a || !b) return 3 / 4;
   return a / b;
-}
-
-function colsForWidth(w: number): number {
-  if (w >= 1024) return 3;
-  if (w >= 640) return 2;
-  return 1;
 }
 
 function createFrameTexture(): THREE.CanvasTexture {
@@ -65,53 +59,6 @@ function createFrameTexture(): THREE.CanvasTexture {
   tex.anisotropy = 4;
   tex.needsUpdate = true;
   return tex;
-}
-
-function createSceneAccents() {
-  const group = new THREE.Group();
-  const meshes: THREE.Mesh[] = [];
-  const geos: THREE.BufferGeometry[] = [];
-  const mats: THREE.Material[] = [];
-
-  const monoGeo = new THREE.BoxGeometry(0.24, 0.24, 0.24);
-  const monoMat = new THREE.MeshStandardMaterial({
-    color: 0xcfcfcf,
-    roughness: 0.72,
-    metalness: 0.02,
-    transparent: true,
-    opacity: 0.3,
-  });
-  geos.push(monoGeo);
-  mats.push(monoMat);
-
-  for (let i = 0; i < 12; i++) {
-    const m = new THREE.Mesh(monoGeo, monoMat);
-    const px = (Math.random() - 0.5) * 6.2;
-    const py = (Math.random() - 0.5) * 3.8;
-    const pz = -0.55 - Math.random() * 1.05;
-    m.position.set(px, py, pz);
-    const s = 0.42 + Math.random() * 0.9;
-    m.scale.set(s, s * (0.75 + Math.random() * 0.35), s);
-    m.rotation.set(Math.random() * 0.8, Math.random() * 0.8, Math.random() * 0.8);
-    m.userData.basePos = m.position.clone();
-    m.userData.seed = Math.random() * Math.PI * 2;
-    m.userData.speed = 0.2 + Math.random() * 0.45;
-    group.add(m);
-    meshes.push(m);
-  }
-
-  group.userData.meshes = meshes;
-  group.userData.geometries = geos;
-  group.userData.materials = mats;
-  return group;
-}
-
-function disposeSceneAccents(scene: THREE.Scene, group: THREE.Group) {
-  const geos = group.userData.geometries as THREE.BufferGeometry[] | undefined;
-  const mats = group.userData.materials as THREE.Material[] | undefined;
-  if (geos) for (const g of geos) g.dispose();
-  if (mats) for (const m of mats) m.dispose();
-  scene.remove(group);
 }
 
 /**
@@ -261,6 +208,11 @@ export function WorksGallery3D({ item }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fadeTweenRef = useRef<gsap.core.Tween | null>(null);
   const textureReqRef = useRef(0);
+  const [view3d, setView3d] = useState(true);
+  const view3dRef = useRef(true);
+  useEffect(() => {
+    view3dRef.current = view3d;
+  }, [view3d]);
   const runtimeRef = useRef<{
     texLoader: THREE.TextureLoader;
     camera: THREE.PerspectiveCamera;
@@ -269,6 +221,8 @@ export function WorksGallery3D({ item }: Props) {
     plateW: number;
     baseAspect: number;
     fitCamera: () => void;
+    groundY: number;
+    alignPictureToGround: (picture: THREE.Group) => void;
   } | null>(null);
   const prevTextureRef = useRef<THREE.Texture | null>(null);
 
@@ -286,6 +240,8 @@ export function WorksGallery3D({ item }: Props) {
         powerPreference: "default",
         failIfMajorPerformanceCaveat: false,
       });
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     } catch {
       return;
     }
@@ -297,13 +253,31 @@ export function WorksGallery3D({ item }: Props) {
     const ambient = new THREE.AmbientLight(0xffffff, 0.78);
     scene.add(ambient);
     const dir = new THREE.DirectionalLight(0xfff5e6, 0.58);
-    dir.position.set(2.2, 3.8, 4.5);
+    /* Свет слева-сверху — тень падает вправо относительно картины */
+    dir.position.set(-4.4, 3.85, 4.1);
+    dir.castShadow = true;
+    dir.shadow.mapSize.set(1024, 1024);
+    dir.shadow.camera.near = 0.4;
+    dir.shadow.camera.far = 22;
+    dir.shadow.camera.left = -6;
+    dir.shadow.camera.right = 6;
+    dir.shadow.camera.top = 6;
+    dir.shadow.camera.bottom = -6;
+    dir.shadow.bias = -0.0004;
     scene.add(dir);
     const fill = new THREE.DirectionalLight(0xe8e4ff, 0.18);
     fill.position.set(-3, 0.5, 2);
     scene.add(fill);
-    const accents = createSceneAccents();
-    scene.add(accents);
+    const shadowFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(22, 16),
+      new THREE.ShadowMaterial({ opacity: 0.32, color: 0x0a0a0c }),
+    );
+    shadowFloor.rotation.x = -Math.PI / 2;
+    /** «Земля»: горизонталь под картиной (мир Y). */
+    const groundY = -1.42;
+    shadowFloor.position.set(0.55, groundY, 0.38);
+    shadowFloor.receiveShadow = true;
+    scene.add(shadowFloor);
 
     const pictureGroups: THREE.Group[] = [];
     const targetRot = new Map<THREE.Group, { x: number; y: number }>();
@@ -343,25 +317,48 @@ export function WorksGallery3D({ item }: Props) {
         const halfW = halfH * camera.aspect;
         const distForHeight = size.y / 2 / halfH;
         const distForWidth = size.x / 2 / halfW;
-        const slack = 1.34;
+        /* На узком экране чуть дальше камера — картина визуально меньше */
+        const isNarrow = (root.clientWidth || window.innerWidth) < 768;
+        const slack = isNarrow ? 1.52 : 1.34;
         const dist = Math.max(distForHeight, distForWidth) * slack + 0.08;
         camera.position.set(center.x, center.y, center.z + dist);
         camera.lookAt(center);
       }
     };
 
-    const plateW = 3.05;
+    const layoutW = root.clientWidth || window.innerWidth;
+    const narrowLayout = layoutW < 768;
+    const plateW = narrowLayout ? 1.82 : 3.05;
     const baseAspect = parseAspectRatio(item.aspectRatio);
     const baseHeight = plateW / baseAspect;
     const g = buildFramedPainting(plateW, baseHeight, item.src, texLoader);
     g.position.set(0, 0, 0);
     g.userData.basePos = new THREE.Vector3(0, 0, 0);
+    g.userData.aspectStretch = 1;
     g.userData.pictureRoot = true;
     g.userData.id = item.id;
+    g.traverse((o) => {
+      if (o instanceof THREE.Mesh) {
+        o.castShadow = true;
+      }
+    });
     scene.add(g);
     pictureGroups.push(g);
     targetRot.set(g, { x: 0, y: 0 });
     appearProg.set(g, 0);
+
+    const alignPictureToGround = (picture: THREE.Group) => {
+      const x = picture.position.x;
+      const z = picture.position.z;
+      picture.position.set(x, 0, z);
+      picture.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(picture);
+      const eps = 0.012;
+      picture.position.y = groundY - b.min.y + eps;
+      (picture.userData.basePos as THREE.Vector3).set(x, picture.position.y, z);
+    };
+    alignPictureToGround(g);
+
     fitCameraToPictures();
 
     runtimeRef.current = {
@@ -372,6 +369,8 @@ export function WorksGallery3D({ item }: Props) {
       plateW,
       baseAspect,
       fitCamera: fitCameraToPictures,
+      groundY,
+      alignPictureToGround,
     };
 
     const raycaster = new THREE.Raycaster();
@@ -461,20 +460,8 @@ export function WorksGallery3D({ item }: Props) {
 
     const tick = () => {
       raf = requestAnimationFrame(tick);
-      const tSec = performance.now() * 0.001;
-      const accentMeshes = accents.userData.meshes as THREE.Mesh[] | undefined;
-      if (accentMeshes) {
-        for (const m of accentMeshes) {
-          const base = m.userData.basePos as THREE.Vector3 | undefined;
-          const seed = (m.userData.seed as number) ?? 0;
-          const speed = (m.userData.speed as number) ?? 0.35;
-          if (!base) continue;
-          const tt = tSec * speed + seed;
-          m.position.x = base.x + Math.sin(tt) * 0.03;
-          m.position.y = base.y + Math.cos(tt * 1.25) * 0.05;
-          m.position.z = base.z + Math.sin(tt * 0.8) * 0.02;
-          m.rotation.z += 0.0012;
-        }
+      if (!view3dRef.current) {
+        return;
       }
       for (const g of pictureGroups) {
         const t = targetRot.get(g);
@@ -490,7 +477,8 @@ export function WorksGallery3D({ item }: Props) {
           g.position.z = base.z;
         }
         const baseScale = 0.94 + eased * 0.06;
-        g.scale.setScalar(baseScale);
+        const stretch = (g.userData.aspectStretch as number) ?? 1;
+        g.scale.set(baseScale, baseScale * stretch, baseScale);
         const baseY = (g.userData.baseRotY as number) ?? 0;
         const baseX = (g.userData.baseRotX as number) ?? 0;
         const targetY = baseY + scrollSpinY + t.y;
@@ -513,7 +501,9 @@ export function WorksGallery3D({ item }: Props) {
       for (const g of [...pictureGroups]) {
         disposePictureGroup(g);
       }
-      disposeSceneAccents(scene, accents);
+      scene.remove(shadowFloor);
+      shadowFloor.geometry.dispose();
+      (shadowFloor.material as THREE.Material).dispose();
       pictureGroups.length = 0;
       runtimeRef.current = null;
       prevTextureRef.current = null;
@@ -528,8 +518,9 @@ export function WorksGallery3D({ item }: Props) {
 
     const nextAspect = parseAspectRatio(item.aspectRatio);
     const scaleY = runtime.baseAspect / nextAspect;
-    runtime.picture.scale.y = scaleY;
+    runtime.picture.userData.aspectStretch = scaleY;
     runtime.picture.userData.id = item.id;
+    runtime.alignPictureToGround(runtime.picture);
     runtime.fitCamera();
     textureReqRef.current += 1;
     const reqId = textureReqRef.current;
@@ -576,13 +567,40 @@ export function WorksGallery3D({ item }: Props) {
   return (
     <div
       ref={rootRef}
-      className="relative mx-auto h-[95dvh] min-h-[95dvh] w-[95vw] max-w-[100%] shrink-0 lg:h-[90dvh] lg:min-h-[90dvh] lg:w-full"
+      className="relative mx-auto h-[min(62dvh,420px)] min-h-[min(62dvh,420px)] w-[76vw] max-w-[100%] shrink-0 sm:h-[min(74dvh,560px)] sm:min-h-[min(74dvh,560px)] sm:w-[86vw] md:h-[82dvh] md:min-h-[82dvh] md:w-[90vw] lg:h-[90dvh] lg:min-h-[90dvh] lg:w-full"
       role="region"
       aria-label="Картины в объёме"
     >
+      {item ? (
+        <button
+          type="button"
+          onClick={() => setView3d((v) => !v)}
+          className="absolute right-2 top-2 z-20 rounded-full border border-zinc-400/90 bg-white/90 px-3 py-1.5 text-xs font-medium text-zinc-800 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-zinc-600 dark:bg-zinc-900/85 dark:text-zinc-100 dark:hover:bg-zinc-800"
+          aria-pressed={view3d}
+          aria-label={
+            view3d
+              ? "Показать обычную фотографию вместо 3D"
+              : "Вернуть объёмный 3D-вид"
+          }
+        >
+          {view3d ? "Фото" : "3D"}
+        </button>
+      ) : null}
+      {!view3d && item ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[linear-gradient(180deg,#e8e6e2_0%,#eceae7_100%)] dark:bg-[linear-gradient(180deg,#1a1f26_0%,#12161c_100%)]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={item.src}
+            alt={item.alt}
+            className="max-h-full max-w-full object-contain px-2 py-4"
+          />
+        </div>
+      ) : null}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 block h-full w-full touch-pan-y"
+        className={`absolute inset-0 block h-full w-full touch-pan-y ${
+          view3d ? "" : "pointer-events-none invisible"
+        }`}
       />
       <ul className="sr-only">
         {shown.map((it) => (
@@ -590,7 +608,7 @@ export function WorksGallery3D({ item }: Props) {
         ))}
       </ul>
       <span className="sr-only" aria-hidden>
-        Одна работа в объёме; при скролле — параллакс и поворот; наведите курсор
+        Одна работа в объёме; при скролле — параллакс и поворот; нажмите и ведите
         для наклона.
       </span>
     </div>

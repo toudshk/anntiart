@@ -2,6 +2,8 @@ export type WorkMeta = {
   title: string;
   medium: string;
   text: string;
+  /** Цена в рублях; не задана — на сайте не показываем. */
+  priceRub?: number | null;
 };
 
 /** Метаданные для работ из статического набора (fallback, пока БД пустая). */

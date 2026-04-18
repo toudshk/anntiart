@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 import { apiErrorMessage, deleteAdminArtwork } from "view/requests";
 
@@ -24,7 +25,7 @@ export function AdminDeleteArtworkButton({ slug, title }: Props) {
       await deleteAdminArtwork(slug);
       router.refresh();
     } catch (e) {
-      alert(apiErrorMessage(e));
+      toast.error(apiErrorMessage(e));
     } finally {
       setBusy(false);
     }

@@ -46,6 +46,7 @@ export default async function EditArtworkPage({ params }: Props) {
     medium: artwork.medium,
     widthCm: artwork.widthCm,
     heightCm: artwork.heightCm,
+    priceRub: artwork.priceRub,
     section: artwork.section,
     status: artwork.status,
     aspectRatio: artwork.aspectRatio ?? "",

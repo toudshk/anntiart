@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { createArtworkSchema } from "view/lib/artwork-payload";
 import { prisma } from "view/lib/prisma";
+import { prismaClientErrorToHttp } from "view/lib/prisma-http-error";
 import { requireAdminResponse } from "view/lib/require-admin";
 
 export async function GET() {
@@ -53,37 +54,53 @@ export async function POST(req: Request) {
           }
         : { hotspotX: null, hotspotY: null, hotspotW: null, hotspotH: null };
 
-  const artwork = await prisma.artwork.create({
-    data: {
-      slug: data.slug,
-      title: data.title,
-      alt: data.alt,
-      description: data.description,
-      medium: data.medium,
-      widthCm: data.widthCm,
-      heightCm: data.heightCm,
-      priceRub: data.priceRub,
-      section: data.section,
-      status: data.status,
-      aspectRatio: data.aspectRatio,
-      isCollectionComposite: data.isCollectionComposite,
-      sortOrder: data.sortOrder,
-      collectionSeriesKey:
-        data.section === ArtworkSection.collection && data.collectionSeriesKey
-          ? data.collectionSeriesKey
-          : null,
-      ...hotspotData,
-      artistId: artist.id,
-      publishedAt: data.status === ArtworkStatus.published ? new Date() : null,
-      images: {
-        create: [{ url: data.imageUrl, sortOrder: 0 }],
+  try {
+    const artwork = await prisma.artwork.create({
+      data: {
+        slug: data.slug,
+        title: data.title,
+        alt: data.alt,
+        description: data.description,
+        medium: data.medium,
+        widthCm: data.widthCm,
+        heightCm: data.heightCm,
+        priceRub: data.priceRub,
+        section: data.section,
+        status: data.status,
+        aspectRatio: data.aspectRatio,
+        isCollectionComposite: data.isCollectionComposite,
+        sortOrder: data.sortOrder,
+        collectionSeriesKey:
+          data.section === ArtworkSection.collection && data.collectionSeriesKey
+            ? data.collectionSeriesKey
+            : null,
+        ...hotspotData,
+        artistId: artist.id,
+        publishedAt:
+          data.status === ArtworkStatus.published ? new Date() : null,
+        images: {
+          create: [{ url: data.imageUrl, sortOrder: 0 }],
+        },
       },
-    },
-    include: {
-      artist: { select: { id: true, slug: true, name: true } },
-      images: true,
-    },
-  });
+      include: {
+        artist: { select: { id: true, slug: true, name: true } },
+        images: true,
+      },
+    });
 
-  return NextResponse.json({ data: artwork }, { status: 201 });
+    return NextResponse.json({ data: artwork }, { status: 201 });
+  } catch (e) {
+    const mapped = prismaClientErrorToHttp(e);
+    if (mapped) {
+      return NextResponse.json({ error: mapped.error }, { status: mapped.status });
+    }
+    console.error("[api/admin/artworks POST]", e);
+    return NextResponse.json(
+      {
+        error:
+          "Не удалось создать запись. Попробуйте позже или проверьте данные.",
+      },
+      { status: 500 },
+    );
+  }
 }
