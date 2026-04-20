@@ -38,8 +38,6 @@ export type ArtworkFormInitial = {
   alt: string;
   description: string;
   medium: string;
-  widthCm: number | null;
-  heightCm: number | null;
   /** null — цена на сайте не показывается */
   priceRub: number | null;
   section: ArtworkSection;
@@ -61,8 +59,6 @@ const emptyCreate = (): ArtworkFormInitial => ({
   alt: "",
   description: "",
   medium: "",
-  widthCm: null,
-  heightCm: null,
   priceRub: null,
   section: "works",
   status: "published",
@@ -311,8 +307,6 @@ export function ArtworkForm(props: Props) {
         alt: values.alt.trim(),
         description: values.description.trim(),
         medium: values.medium.trim(),
-        widthCm: isColl ? null : values.widthCm,
-        heightCm: isColl ? null : values.heightCm,
         priceRub: values.priceRub,
         section: values.section,
         status: values.status,
@@ -477,33 +471,6 @@ export function ArtworkForm(props: Props) {
           Параметры полотна
         </h2>
 
-      {props.mode === "edit" && !isCollection ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className={labelClass}>
-            <span>Ширина, см</span>
-            <input
-              type="number"
-              min={1}
-              className={fieldClass}
-              {...register("widthCm", {
-                setValueAs: parseOptionalNumber,
-              })}
-            />
-          </label>
-          <label className={labelClass}>
-            <span>Высота, см</span>
-            <input
-              type="number"
-              min={1}
-              className={fieldClass}
-              {...register("heightCm", {
-                setValueAs: parseOptionalNumber,
-              })}
-            />
-          </label>
-        </div>
-      ) : null}
-
       <label className={labelClass}>
         <span>Цена, ₽</span>
         <p className="mt-0.5 text-xs font-normal leading-snug text-zinc-500 dark:text-zinc-400">
@@ -542,10 +509,6 @@ export function ArtworkForm(props: Props) {
                     setValue("isCollectionComposite", false);
                     setValue("collectionSeriesKey", "");
                   }
-                  if (section === "collection") {
-                    setValue("widthCm", null, { shouldDirty: true });
-                    setValue("heightCm", null, { shouldDirty: true });
-                  }
                 },
               })}
             >
@@ -573,9 +536,7 @@ export function ArtworkForm(props: Props) {
           Aspect ratio
           {isCollection
             ? " (опционально; если пусто — на сайте 2/3)"
-            : props.mode === "create"
-              ? " (опционально)"
-              : " (опционально, иначе из см)"}
+            : " (опционально)"}
         </span>
         <input
           className={fieldClass}

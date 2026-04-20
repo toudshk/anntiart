@@ -8,8 +8,6 @@ const imageUrlSchema = z.string().refine(
 
 export type ArtworkInvariantInput = {
   section: ArtworkSection;
-  widthCm: number | null | undefined;
-  heightCm: number | null | undefined;
   isCollectionComposite: boolean;
   hotspotX: number | null | undefined;
   hotspotY: number | null | undefined;
@@ -59,8 +57,6 @@ export const createArtworkSchema = z
     alt: z.string().min(1).max(240),
     description: z.string().min(1),
     medium: z.string().min(1).max(120),
-    widthCm: z.number().int().positive().optional(),
-    heightCm: z.number().int().positive().optional(),
     priceRub: z.number().int().nonnegative().optional(),
     section: z.nativeEnum(ArtworkSection).default(ArtworkSection.works),
     status: z.nativeEnum(ArtworkStatus).default(ArtworkStatus.published),
@@ -87,8 +83,6 @@ export const createArtworkSchema = z
   .superRefine((val, ctx) => {
     const msg = artworkInvariantsError({
       section: val.section,
-      widthCm: val.widthCm,
-      heightCm: val.heightCm,
       isCollectionComposite: val.isCollectionComposite,
       hotspotX: val.hotspotX,
       hotspotY: val.hotspotY,
@@ -106,8 +100,6 @@ export const patchArtworkSchema = z
     alt: z.string().min(1).max(240).optional(),
     description: z.string().min(1).optional(),
     medium: z.string().min(1).max(120).optional(),
-    widthCm: z.number().int().positive().nullable().optional(),
-    heightCm: z.number().int().positive().nullable().optional(),
     priceRub: z.number().int().nonnegative().nullable().optional(),
     section: z.nativeEnum(ArtworkSection).optional(),
     status: z.nativeEnum(ArtworkStatus).optional(),

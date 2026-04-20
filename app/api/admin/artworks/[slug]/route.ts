@@ -35,9 +35,6 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
   const body = parsed.data;
 
   const section = body.section ?? existing.section;
-  const widthCm = body.widthCm !== undefined ? body.widthCm : existing.widthCm;
-  const heightCm =
-    body.heightCm !== undefined ? body.heightCm : existing.heightCm;
   const isCollectionComposite =
     body.isCollectionComposite !== undefined
       ? body.isCollectionComposite
@@ -70,8 +67,6 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
 
   const invariantMsg = artworkInvariantsError({
     section,
-    widthCm,
-    heightCm,
     isCollectionComposite,
     hotspotX,
     hotspotY,
@@ -100,8 +95,6 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
         alt: body.alt ?? undefined,
         description: body.description ?? undefined,
         medium: body.medium ?? undefined,
-        widthCm: body.widthCm !== undefined ? body.widthCm : undefined,
-        heightCm: body.heightCm !== undefined ? body.heightCm : undefined,
         priceRub: body.priceRub !== undefined ? body.priceRub : undefined,
         section: body.section ?? undefined,
         status: body.status ?? undefined,
