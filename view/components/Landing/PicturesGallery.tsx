@@ -486,11 +486,10 @@ export function PicturesGallery({
                       key={`${activeWork?.id ?? "work"}-detail-${idx}`}
                       className="overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-900/45"
                     >
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={url}
                         alt={`${activeMeta.title} — деталь ${idx + 1}`}
-                        width={220}
-                        height={220}
                         className="h-full w-full object-cover"
                       />
                     </div>
