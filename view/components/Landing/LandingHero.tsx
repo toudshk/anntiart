@@ -191,7 +191,7 @@ export function LandingHero() {
             data-gsap="hero-title"
             className="font-literature-decor relative z-10 text-4xl font-thin tracking-tight text-zinc-900 sm:text-6xl lg:text-8xl dark:text-zinc-100"
           >
-            Галерея Анны Тихоненко.
+            Галерея Анны Тихоненко
           </h1>
           <p
             data-gsap="hero-text"
