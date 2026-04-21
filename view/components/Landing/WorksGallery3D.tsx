@@ -445,6 +445,7 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
         });
 
     let raf = 0;
+    let prevLayoutWidth = 0;
     const setSize = () => {
       const w = root.clientWidth;
       const h = Math.max(320, root.clientHeight);
@@ -453,7 +454,10 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       fitCameraToPictures();
-      ScrollTrigger.refresh();
+      if (w !== prevLayoutWidth) {
+        prevLayoutWidth = w;
+        ScrollTrigger.refresh();
+      }
     };
 
     const ro = new ResizeObserver(setSize);

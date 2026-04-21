@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -50,18 +50,8 @@ function ScrollDownHint() {
 export function LandingHero() {
   const rootRef = useRef<HTMLElement>(null);
   const catRef = useRef<HTMLElement>(null);
+  const lastWidthRef = useRef<number>(0);
   const [showCat, setShowCat] = useState(false);
-  const [useStaticHero, setUseStaticHero] = useState(false);
-
-  useEffect(() => {
-    const ua = navigator.userAgent;
-    const isIOS =
-      /iP(ad|hone|od)/i.test(ua) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    if (isIOS) {
-      setUseStaticHero(true);
-    }
-  }, []);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -106,7 +96,7 @@ export function LandingHero() {
       );
       const sticky = section?.querySelector<HTMLElement>("[data-hero-sticky]");
 
-      if (!useStaticHero && section && scaleRoot && sticky) {
+      if (section && scaleRoot && sticky) {
         gsap.set(sticky, { filter: "none", opacity: 1 });
 
         const blurDuration = 1 - HERO_BLUR_SCROLL_DELAY;
@@ -137,7 +127,11 @@ export function LandingHero() {
       }
     }, rootRef);
 
+    lastWidthRef.current = window.innerWidth;
+
     const onResize = () => {
+      if (window.innerWidth === lastWidthRef.current) return;
+      lastWidthRef.current = window.innerWidth;
       ScrollTrigger.refresh();
     };
     window.addEventListener("resize", onResize);
@@ -146,15 +140,14 @@ export function LandingHero() {
       window.removeEventListener("resize", onResize);
       ctx.revert();
     };
-  }, [useStaticHero]);
+  }, []);
 
   useLayoutEffect(() => {
-    if (useStaticHero) return;
     const id = requestAnimationFrame(() => {
       ScrollTrigger.refresh(true);
     });
     return () => cancelAnimationFrame(id);
-  }, [useStaticHero]);
+  }, []);
 
   useLayoutEffect(() => {
     if (!catRef.current) return;
@@ -171,14 +164,10 @@ export function LandingHero() {
   return (
     <section
       ref={rootRef}
-      className={`relative z-10 bg-pastel-hero ${useStaticHero ? "min-h-svh" : ""}`}
-      style={
-        useStaticHero
-          ? undefined
-          : {
-              height: `calc(100svh + ${HERO_EXTRA_SCROLL_VH}vh)`,
-            }
-      }
+      className="relative z-10 bg-pastel-hero"
+      style={{
+        height: `calc(100svh + ${HERO_EXTRA_SCROLL_VH}vh)`,
+      }}
       aria-labelledby="landing-hero-heading"
     >
       <div
@@ -191,11 +180,7 @@ export function LandingHero() {
       </div>
       <div
         data-hero-sticky
-        className={
-          useStaticHero
-            ? "flex min-h-svh flex-col items-center justify-center gap-6 overflow-x-hidden px-6 pb-16 pt-32 text-center"
-            : "sticky top-0 flex h-svh flex-col items-center justify-center gap-6 overflow-x-hidden px-6 pt-48 text-center will-change-[filter,opacity]"
-        }
+        className="sticky top-0 flex h-svh flex-col items-center justify-center gap-6 overflow-x-hidden px-6 pt-48 text-center will-change-[filter,opacity]"
       >
         <div
           data-gsap="hero-title-scale"
