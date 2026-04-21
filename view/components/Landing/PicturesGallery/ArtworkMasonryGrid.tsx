@@ -8,6 +8,12 @@ type Props = {
   photos: MasonryPhoto[];
 };
 
+function mobileCardTitle(text: string): string {
+  const trimmed = text.trim();
+  const split = trimmed.split(/\s+[—-]\s+/);
+  return split[0]?.trim() || trimmed;
+}
+
 export function ArtworkMasonryGrid({ photos }: Props) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
@@ -39,30 +45,30 @@ export function ArtworkMasonryGrid({ photos }: Props) {
 
   return (
     <>
-      <section className="mt-12 space-y-5" aria-labelledby="artwork-masonry-heading">
-        <header className="space-y-2">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-400">
+      <section className="mt-10 space-y-4 sm:mt-12 sm:space-y-5" aria-labelledby="artwork-masonry-heading">
+        <header className="space-y-1.5 sm:space-y-2">
+          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-zinc-500 sm:text-[0.68rem] sm:tracking-[0.24em] dark:text-zinc-400">
             Архив фотографий
           </p>
           <h4
             id="artwork-masonry-heading"
-            className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50"
+            className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl dark:text-zinc-50"
           >
             Все фото работ и коллекции
           </h4>
-          <p className="max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          <p className="max-w-2xl text-xs leading-relaxed text-zinc-600 sm:text-sm dark:text-zinc-400">
             Крупные планы, детали, фрагменты и общие композиции. Нажмите на фото, чтобы
             открыть его на тёмном фоне.
           </p>
         </header>
 
-        <div className="columns-2 gap-4 md:columns-3 xl:columns-4">
+        <div className="columns-2 gap-3 sm:gap-4 md:columns-3 xl:columns-4">
           {photos.map((photo, idx) => (
             <button
               key={photo.key}
               type="button"
               onClick={() => setActiveIdx(idx)}
-              className="group mb-4 block w-full break-inside-avoid overflow-hidden rounded-2xl border border-zinc-200/90 bg-white/70 text-left shadow-[0_16px_30px_-22px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_36px_-22px_rgba(15,23,42,0.45)] dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:shadow-[0_16px_30px_-22px_rgba(0,0,0,0.55)]"
+              className="group mb-3 block w-full break-inside-avoid overflow-hidden rounded-xl border border-zinc-200/90 bg-white/70 text-left shadow-[0_16px_30px_-22px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_36px_-22px_rgba(15,23,42,0.45)] sm:mb-4 sm:rounded-2xl dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:shadow-[0_16px_30px_-22px_rgba(0,0,0,0.55)]"
             >
               <div className="overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -73,11 +79,14 @@ export function ArtworkMasonryGrid({ photos }: Props) {
                   className="h-auto w-full transition duration-500 group-hover:scale-[1.02]"
                 />
               </div>
-              <div className="space-y-1 px-3 py-3">
-                <span className="inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2 py-0.5 text-[0.65rem] font-medium uppercase tracking-[0.12em] text-zinc-600 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-300">
+              <div className="space-y-1 px-2.5 py-2.5 sm:px-3 sm:py-3">
+                <span className="inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-1.5 py-0.5 text-[0.58rem] font-medium uppercase tracking-[0.1em] text-zinc-600 sm:px-2 sm:text-[0.65rem] sm:tracking-[0.12em] dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-300">
                   {photo.category}
                 </span>
-                <p className="line-clamp-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">
+                <p className="truncate text-[0.88rem] font-medium leading-snug text-zinc-800 sm:hidden dark:text-zinc-100">
+                  {mobileCardTitle(photo.alt)}
+                </p>
+                <p className="hidden truncate text-sm font-medium text-zinc-800 sm:block dark:text-zinc-100">
                   {photo.alt}
                 </p>
               </div>
