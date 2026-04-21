@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import type { MasonryPhoto } from "./shared";
@@ -71,11 +72,12 @@ export function ArtworkMasonryGrid({ photos }: Props) {
               className="group mb-3 block w-full break-inside-avoid overflow-hidden rounded-xl border border-zinc-200/90 bg-white/70 text-left shadow-[0_16px_30px_-22px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_36px_-22px_rgba(15,23,42,0.45)] sm:mb-4 sm:rounded-2xl dark:border-zinc-700/80 dark:bg-zinc-900/60 dark:shadow-[0_16px_30px_-22px_rgba(0,0,0,0.55)]"
             >
               <div className="overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={photo.src}
                   alt={photo.alt}
-                  loading="lazy"
+                  width={900}
+                  height={1200}
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   className="h-auto w-full transition duration-500 group-hover:scale-[1.02]"
                 />
               </div>
@@ -142,10 +144,12 @@ export function ArtworkMasonryGrid({ photos }: Props) {
             className="max-h-full max-w-[min(92vw,1180px)]"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={activePhoto.src}
               alt={activePhoto.alt}
+              width={1600}
+              height={2200}
+              sizes="92vw"
               className="max-h-[82vh] max-w-full rounded-2xl object-contain shadow-[0_32px_64px_-28px_rgba(0,0,0,0.8)]"
             />
             <figcaption className="mt-3 text-center text-sm text-white/88">
