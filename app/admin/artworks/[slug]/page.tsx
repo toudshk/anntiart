@@ -54,6 +54,7 @@ export default async function EditArtworkPage({ params }: Props) {
     hotspotW: artwork.hotspotW,
     hotspotH: artwork.hotspotH,
     collectionSeriesKey: artwork.collectionSeriesKey ?? "",
+    imageUrlsText: artwork.images.map((img) => img.url).join("\n"),
     imageUrl: artwork.images[0]?.url ?? "",
   };
 

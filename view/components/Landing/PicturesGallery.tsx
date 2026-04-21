@@ -123,7 +123,7 @@ function CollectionInteractive({
 
   return (
     <div
-      className="relative mx-auto max-w-6xl overflow-hidden rounded-[1.75rem] border border-zinc-200/90 bg-gradient-to-br from-white/85 via-pastel-gray-50/65 to-pastel-gray-100/55 px-4 py-4 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.28),inset_0_1px_0_rgba(255,255,255,0.65)] max-lg:max-h-[100dvh] max-lg:overflow-x-hidden max-lg:overflow-y-auto max-lg:overscroll-y-contain sm:px-8 sm:py-8 dark:border-zinc-700/80 dark:from-zinc-900/75 dark:via-zinc-900/55 dark:to-zinc-950/45 dark:shadow-[0_22px_48px_-28px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]"
+      className="relative mx-auto max-w-6xl overflow-hidden rounded-[1.75rem] border border-zinc-200/90 bg-gradient-to-br from-white/85 via-pastel-gray-50/65 to-pastel-gray-100/55 px-4 py-4 shadow-[0_22px_48px_-28px_rgba(15,23,42,0.28),inset_0_1px_0_rgba(255,255,255,0.65)] max-lg:max-h-[100svh] max-lg:overflow-x-hidden max-lg:overflow-y-auto max-lg:overscroll-y-contain sm:px-8 sm:py-8 dark:border-zinc-700/80 dark:from-zinc-900/75 dark:via-zinc-900/55 dark:to-zinc-950/45 dark:shadow-[0_22px_48px_-28px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.04)]"
       aria-labelledby="collection-interactive-label"
     >
       <div
@@ -151,9 +151,9 @@ function CollectionInteractive({
             </span>
           </div>
 
-          <figure className="group relative mx-auto max-h-[min(46dvh,72svh)] w-full overflow-hidden rounded-2xl border border-zinc-300/75 bg-zinc-100/40 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.35)] ring-1 ring-inset ring-white/50 max-lg:max-w-full lg:max-h-none dark:border-zinc-600/70 dark:bg-zinc-950/35 dark:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.55)] dark:ring-white/5">
+          <figure className="group relative mx-auto max-h-[46svh] w-full overflow-hidden rounded-2xl border border-zinc-300/75 bg-zinc-100/40 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.35)] ring-1 ring-inset ring-white/50 max-lg:max-w-full lg:max-h-none dark:border-zinc-600/70 dark:bg-zinc-950/35 dark:shadow-[0_18px_40px_-24px_rgba(0,0,0,0.55)] dark:ring-white/5">
             <div
-              className="relative mx-auto w-full max-w-full cursor-pointer max-lg:max-h-[min(46dvh,72svh)]"
+              className="relative mx-auto w-full max-w-full cursor-pointer max-lg:max-h-[46svh]"
               style={{ aspectRatio: main.aspectRatio ?? "4/3" }}
             >
               <Image
@@ -436,7 +436,14 @@ export function PicturesGallery({
             />
           </div>
           <div className="order-2 w-full lg:order-none lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <WorksGallery3D item={activeWork ?? null} />
+            <WorksGallery3D
+              item={activeWork ?? null}
+              photoUrls={
+                activeWork
+                  ? [activeWork.src, ...(activeMeta.detailImageUrls ?? [])]
+                  : []
+              }
+            />
           </div>
           <aside
             data-art-note
@@ -468,6 +475,29 @@ export function PicturesGallery({
                 </p>
               ))}
             </div>
+            {activeMeta.detailImageUrls?.length ? (
+              <div className="mt-3 space-y-2">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
+                  Детали работы
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {activeMeta.detailImageUrls.slice(0, 6).map((url, idx) => (
+                    <div
+                      key={`${activeWork?.id ?? "work"}-detail-${idx}`}
+                      className="overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-900/45"
+                    >
+                      <Image
+                        src={url}
+                        alt={`${activeMeta.title} — деталь ${idx + 1}`}
+                        width={220}
+                        height={220}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </aside>
         </div>
 

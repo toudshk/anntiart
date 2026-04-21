@@ -161,7 +161,7 @@ export function LandingHero() {
       ref={rootRef}
       className="relative z-10 bg-pastel-hero"
       style={{
-        height: `calc(100dvh + ${HERO_EXTRA_SCROLL_VH}vh)`,
+        height: `calc(100svh + ${HERO_EXTRA_SCROLL_VH}vh)`,
       }}
       aria-labelledby="landing-hero-heading"
     >
@@ -175,7 +175,7 @@ export function LandingHero() {
       </div>
       <div
         data-hero-sticky
-        className="sticky top-0 flex h-dvh flex-col items-center justify-center gap-6 overflow-x-hidden px-6 pt-48 text-center will-change-[filter,opacity]"
+        className="sticky top-0 flex h-svh flex-col items-center justify-center gap-6 overflow-x-hidden px-6 pt-48 text-center will-change-[filter,opacity]"
       >
         <div
           data-gsap="hero-title-scale"

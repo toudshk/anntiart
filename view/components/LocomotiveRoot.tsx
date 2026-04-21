@@ -16,6 +16,23 @@ type Props = {
  */
 export function LocomotiveRoot({ children }: Props) {
   useLayoutEffect(() => {
+    const ua = navigator.userAgent;
+    const isIOS =
+      /iP(ad|hone|od)/i.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isWebKit = /WebKit/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+
+    // iOS Safari меняет viewport при появлении/скрытии верхней и нижней панелей.
+    // В сочетании со smooth-scroll proxy это вызывает заметное дёрганье при скролле.
+    if (isIOS && isWebKit) {
+      const rafId = requestAnimationFrame(() => {
+        ScrollTrigger.refresh(true);
+      });
+      return () => {
+        cancelAnimationFrame(rafId);
+      };
+    }
+
     const loco = new LocomotiveScroll({
       lenisOptions: {
         lerp: 0.088,

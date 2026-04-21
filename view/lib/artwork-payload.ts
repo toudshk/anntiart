@@ -5,6 +5,9 @@ const imageUrlSchema = z.string().refine(
   (s) => s.startsWith("/") || /^https?:\/\//i.test(s),
   "Укажите путь (/pictures/...) или полный URL",
 );
+const imageUrlsSchema = z
+  .array(imageUrlSchema)
+  .min(1, "Добавьте хотя бы одно изображение");
 
 export type ArtworkInvariantInput = {
   section: ArtworkSection;
@@ -62,7 +65,8 @@ export const createArtworkSchema = z
     status: z.nativeEnum(ArtworkStatus).default(ArtworkStatus.published),
     aspectRatio: z.string().regex(/^\d+\/\d+$/).optional(),
     artistSlug: z.string().default("anna-tikhonenko"),
-    imageUrl: imageUrlSchema,
+    imageUrl: imageUrlSchema.optional(),
+    imageUrls: imageUrlsSchema.optional(),
     isCollectionComposite: z.boolean().default(false),
     hotspotX: z.number().min(0).max(100).optional(),
     hotspotY: z.number().min(0).max(100).optional(),
@@ -81,6 +85,14 @@ export const createArtworkSchema = z
       .transform((s) => (!s ? undefined : s)),
   })
   .superRefine((val, ctx) => {
+    if (!val.imageUrl && (!val.imageUrls || val.imageUrls.length === 0)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Укажите imageUrl или imageUrls (минимум 1)",
+        path: ["imageUrls"],
+      });
+    }
+
     const msg = artworkInvariantsError({
       section: val.section,
       isCollectionComposite: val.isCollectionComposite,
@@ -111,6 +123,7 @@ export const patchArtworkSchema = z
     hotspotH: z.number().min(0).max(100).nullable().optional(),
     sortOrder: z.number().int().optional(),
     imageUrl: imageUrlSchema.optional(),
+    imageUrls: imageUrlsSchema.optional(),
     collectionSeriesKey: z
       .string()
       .trim()

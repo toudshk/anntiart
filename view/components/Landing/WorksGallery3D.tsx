@@ -11,6 +11,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 type Props = {
   item: PictureItem | null;
+  photoUrls?: string[];
 };
 
 function parseAspectRatio(ar: string | undefined): number {
@@ -203,12 +204,13 @@ function buildFramedPainting(
 /**
  * Один WebGL-холст на весь блок «Картины»: все работы в одной сцене, без отдельного контекста на карточку.
  */
-export function WorksGallery3D({ item }: Props) {
+export function WorksGallery3D({ item, photoUrls = [] }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fadeTweenRef = useRef<gsap.core.Tween | null>(null);
   const textureReqRef = useRef(0);
   const [view3d, setView3d] = useState(true);
+  const [photoIdx, setPhotoIdx] = useState(0);
   const view3dRef = useRef(true);
   useEffect(() => {
     view3dRef.current = view3d;
@@ -512,6 +514,10 @@ export function WorksGallery3D({ item }: Props) {
   }, [item]);
 
   useEffect(() => {
+    setPhotoIdx(0);
+  }, [item?.id, photoUrls.join("|")]);
+
+  useEffect(() => {
     if (!item) return;
     const runtime = runtimeRef.current;
     if (!runtime) return;
@@ -562,12 +568,14 @@ export function WorksGallery3D({ item }: Props) {
     );
   }, [item?.id, item?.src, item?.aspectRatio]);
 
+  const gallery = photoUrls.length > 0 ? photoUrls : item?.src ? [item.src] : [];
+  const activePhoto = gallery[photoIdx] ?? item?.src ?? "";
   const shown = item ? [item] : [];
 
   return (
     <div
       ref={rootRef}
-      className="relative mx-auto h-[min(62dvh,420px)] min-h-[min(62dvh,420px)] w-[76vw] max-w-[100%] shrink-0 sm:h-[min(74dvh,560px)] sm:min-h-[min(74dvh,560px)] sm:w-[86vw] md:h-[82dvh] md:min-h-[82dvh] md:w-[90vw] lg:h-[90dvh] lg:min-h-[90dvh] lg:w-full"
+      className="relative mx-auto h-[min(62svh,420px)] min-h-[min(62svh,420px)] w-[76vw] max-w-[100%] shrink-0 sm:h-[min(74svh,560px)] sm:min-h-[min(74svh,560px)] sm:w-[86vw] md:h-[82svh] md:min-h-[82svh] md:w-[90vw] lg:h-[90dvh] lg:min-h-[90dvh] lg:w-full"
       role="region"
       aria-label="Картины в объёме"
     >
@@ -590,10 +598,48 @@ export function WorksGallery3D({ item }: Props) {
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[linear-gradient(180deg,#e8e6e2_0%,#eceae7_100%)] dark:bg-[linear-gradient(180deg,#1a1f26_0%,#12161c_100%)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={item.src}
+            src={activePhoto}
             alt={item.alt}
             className="max-h-full max-w-full object-contain px-2 py-4"
           />
+          {gallery.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  setPhotoIdx((v) => (v - 1 + gallery.length) % gallery.length)
+                }
+                className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-zinc-400/90 bg-white/85 px-2.5 py-1 text-xs font-medium text-zinc-800 shadow-sm transition hover:bg-white dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                aria-label="Предыдущее фото"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                onClick={() => setPhotoIdx((v) => (v + 1) % gallery.length)}
+                className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-zinc-400/90 bg-white/85 px-2.5 py-1 text-xs font-medium text-zinc-800 shadow-sm transition hover:bg-white dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                aria-label="Следующее фото"
+              >
+                →
+              </button>
+              <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-zinc-300/80 bg-white/80 px-2 py-1 shadow-sm dark:border-zinc-600 dark:bg-zinc-900/75">
+                {gallery.map((_, idx) => (
+                  <button
+                    key={`photo-dot-${idx}`}
+                    type="button"
+                    onClick={() => setPhotoIdx(idx)}
+                    aria-label={`Показать фото ${idx + 1}`}
+                    aria-pressed={idx === photoIdx}
+                    className={`h-2 w-2 rounded-full transition ${
+                      idx === photoIdx
+                        ? "bg-zinc-900 dark:bg-zinc-100"
+                        : "bg-zinc-400/75 hover:bg-zinc-500 dark:bg-zinc-600 dark:hover:bg-zinc-500"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
       ) : null}
       <canvas

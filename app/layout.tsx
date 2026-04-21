@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     default: "Anntiart",
     template: "%s | Anntiart",
   },
-  description: "Галерея работ Анны Тихоненко",
+  description: "Одностраничный лендинг",
   icons: {
     icon: "/icon-rounded.png",
     shortcut: "/icon-rounded.png",

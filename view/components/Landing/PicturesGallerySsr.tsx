@@ -20,8 +20,7 @@ function heightFromAspect(baseW: number, aspectRatio?: string): number {
  * для SEO и скринридеров; интерактив (3D, переключение работ) остаётся в {@link PicturesGallery}.
  */
 export function PicturesGallerySsr(props: PicturesGalleryProps) {
-  // const works = props.works ?? FALLBACK_WORKS;
-  const works = props.works;
+  const works = props.works ?? FALLBACK_WORKS;
   const workMeta = props.workMeta ?? STATIC_WORKS_META;
 
   return (
@@ -31,8 +30,7 @@ export function PicturesGallerySsr(props: PicturesGalleryProps) {
         aria-label="Каталог работ: изображения и описания для индексации"
       >
         <h2>Галерея работ</h2>
-       
-        {works && works.map((w, idx) => {
+        {works.map((w, idx) => {
           const meta = workMeta[w.id];
           const title = meta?.title ?? w.alt;
           const baseW = 640;

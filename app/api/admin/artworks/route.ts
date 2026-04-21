@@ -52,6 +52,9 @@ export async function POST(req: Request) {
             hotspotH: data.hotspotH ?? null,
           }
         : { hotspotX: null, hotspotY: null, hotspotW: null, hotspotH: null };
+  const normalizedImageUrls =
+    data.imageUrls?.map((u) => u.trim()).filter(Boolean) ??
+    (data.imageUrl ? [data.imageUrl.trim()] : []);
 
   try {
     const artwork = await prisma.artwork.create({
@@ -77,7 +80,10 @@ export async function POST(req: Request) {
         artistId: artist.id,
         publishedAt: data.status === "published" ? new Date() : null,
         images: {
-          create: [{ url: data.imageUrl, sortOrder: 0 }],
+          create: normalizedImageUrls.map((url, idx) => ({
+            url,
+            sortOrder: idx,
+          })),
         },
       },
       include: {

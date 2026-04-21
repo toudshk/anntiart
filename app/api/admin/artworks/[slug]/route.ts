@@ -137,13 +137,25 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
       },
     });
 
-    if (body.imageUrl) {
+    const shouldReplaceImages =
+      body.imageUrls !== undefined || Boolean(body.imageUrl);
+    if (shouldReplaceImages) {
+      const normalizedImageUrls =
+        body.imageUrls?.map((u) => u.trim()).filter(Boolean) ??
+        (body.imageUrl ? [body.imageUrl.trim()] : []);
+
       await prisma.artworkImage.deleteMany({
         where: { artworkId: updated.id },
       });
-      await prisma.artworkImage.create({
-        data: { artworkId: updated.id, url: body.imageUrl, sortOrder: 0 },
-      });
+      if (normalizedImageUrls.length > 0) {
+        await prisma.artworkImage.createMany({
+          data: normalizedImageUrls.map((url, idx) => ({
+            artworkId: updated.id,
+            url,
+            sortOrder: idx,
+          })),
+        });
+      }
     }
 
     const fresh = await prisma.artwork.findUnique({

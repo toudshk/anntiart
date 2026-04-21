@@ -47,11 +47,12 @@ export function dbArtworkToPictureItem(row: ArtworkWithImages): PictureItem {
   return item;
 }
 
-export function dbArtworkToWorkMeta(row: Artwork): WorkMeta {
+export function dbArtworkToWorkMeta(row: ArtworkWithImages): WorkMeta {
   return {
     title: row.title,
     medium: row.medium,
     text: row.description,
     priceRub: row.priceRub,
+    detailImageUrls: row.images.slice(1).map((img) => img.url),
   };
 }
