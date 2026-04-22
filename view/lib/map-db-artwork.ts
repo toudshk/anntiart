@@ -52,6 +52,7 @@ export function dbArtworkToWorkMeta(row: ArtworkWithImages): WorkMeta {
     title: row.title,
     medium: row.medium,
     text: row.description,
+    status: row.status,
     priceRub: row.priceRub,
     detailImageUrls: row.images.slice(1).map((img) => img.url),
   };

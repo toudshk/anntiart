@@ -21,6 +21,7 @@ export type MasonryPhoto = {
   alt: string;
   title: string;
   category: "Работы" | "Серии";
+  status?: WorkMeta["status"];
 };
 
 export const COLLECTION_SECTION_INTRO =
@@ -28,10 +29,13 @@ export const COLLECTION_SECTION_INTRO =
 
 export function getWorkMetaFallback(activeWork: PictureItem | undefined): WorkMeta {
   return (
-    STATIC_WORKS_META[activeWork?.id ?? ""] ?? {
+    {
+      status: "published",
+      ...(STATIC_WORKS_META[activeWork?.id ?? ""] ?? {
       title: activeWork?.alt ?? "Работа",
       medium: "Масло, холст",
       text: "Описание будет добавлено позже.",
+      }),
     }
   );
 }
@@ -67,6 +71,7 @@ export function buildMasonryPhotos(
         alt: item.alt,
         title,
         category,
+        status: meta?.status ?? "published",
       });
       meta?.detailImageUrls?.forEach((src, idx) => {
         out.push({
@@ -75,6 +80,7 @@ export function buildMasonryPhotos(
           alt: `${title} — деталь ${idx + 1}`,
           title,
           category,
+          status: meta?.status ?? "published",
         });
       });
     }

@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
+import { artworkStatusLabel } from "view/constants/works-meta";
+
 import type { MasonryPhoto } from "./shared";
 
 type Props = {
@@ -82,9 +84,16 @@ export function ArtworkMasonryGrid({ photos }: Props) {
                 />
               </div>
               <div className="space-y-1 px-2.5 py-2.5 sm:px-3 sm:py-3">
-                <span className="inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-1.5 py-0.5 text-[0.58rem] font-medium uppercase tracking-[0.1em] text-zinc-600 sm:px-2 sm:text-[0.65rem] sm:tracking-[0.12em] dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-300">
-                  {photo.category}
-                </span>
+                <div className="flex flex-wrap gap-1">
+                  <span className="inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-1.5 py-0.5 text-[0.58rem] font-medium uppercase tracking-[0.1em] text-zinc-600 sm:px-2 sm:text-[0.65rem] sm:tracking-[0.12em] dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-300">
+                    {photo.category}
+                  </span>
+                  {artworkStatusLabel(photo.status) ? (
+                    <span className="inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-1.5 py-0.5 text-[0.58rem] font-medium uppercase tracking-[0.1em] text-zinc-600 sm:px-2 sm:text-[0.65rem] sm:tracking-[0.12em] dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-300">
+                      {artworkStatusLabel(photo.status)}
+                    </span>
+                  ) : null}
+                </div>
                 <p className="truncate text-[0.88rem] font-medium leading-snug text-zinc-800 sm:hidden dark:text-zinc-100">
                   {mobileCardTitle(photo.alt)}
                 </p>

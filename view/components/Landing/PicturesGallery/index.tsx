@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import { STATIC_WORKS_META } from "view/constants/works-meta";
+import { STATIC_WORKS_META, artworkStatusLabel } from "view/constants/works-meta";
 import { partitionCollectionSeries } from "view/lib/collection-series";
 import { formatPriceRub } from "view/lib/format-price";
 
@@ -59,7 +59,10 @@ export function PicturesGallery({
   const [activeIndex, setActiveIndex] = useState(0);
   const activeWork = works[activeIndex] ?? works[0];
   const activeMeta = useMemo(
-    () => workMeta[activeWork?.id] ?? getWorkMetaFallback(activeWork),
+    () => ({
+      ...getWorkMetaFallback(activeWork),
+      ...(workMeta[activeWork?.id] ?? {}),
+    }),
     [activeWork, workMeta],
   );
   const activeTextLines = useMemo(
@@ -184,6 +187,11 @@ export function PicturesGallery({
             <p className="mt-1 text-xs font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
               {activeMeta.medium}
             </p>
+            {artworkStatusLabel(activeMeta.status) ? (
+              <p className="mt-1 inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2.5 py-0.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200">
+                {artworkStatusLabel(activeMeta.status)}
+              </p>
+            ) : null}
             {activeMeta.priceRub != null ? (
               <p className="mt-1 text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
                 {formatPriceRub(activeMeta.priceRub)}

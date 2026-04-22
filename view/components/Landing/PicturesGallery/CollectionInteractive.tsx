@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 
 import type { PictureItem } from "view/constants/pictures";
-import type { WorkMeta } from "view/constants/works-meta";
+import { artworkStatusLabel, type WorkMeta } from "view/constants/works-meta";
 import { formatPriceRub } from "view/lib/format-price";
 
 type Props = {
@@ -144,6 +144,11 @@ export function CollectionInteractive({
               {activeFragmentMeta?.medium ? (
                 <p className="text-xs font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
                   {activeFragmentMeta.medium}
+                </p>
+              ) : null}
+              {artworkStatusLabel(activeFragmentMeta?.status) ? (
+                <p className="mt-1 inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2.5 py-0.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200">
+                  {artworkStatusLabel(activeFragmentMeta?.status)}
                 </p>
               ) : null}
               {activeFragmentMeta?.priceRub != null ? (

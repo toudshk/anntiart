@@ -77,9 +77,9 @@ export function ArtworkSettingsSection({
             <span>Статус</span>
             <select className={fieldClass} {...register("status")}>
               <option value="draft">Черновик</option>
-              <option value="published">Опубликовано</option>
+              <option value="published">В наличии</option>
               <option value="sold">Продано</option>
-              <option value="reserved">Резерв</option>
+              <option value="reserved">Забронировано</option>
             </select>
           </label>
         </div>

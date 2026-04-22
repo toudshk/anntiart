@@ -1,4 +1,4 @@
-import { ArtworkSection, ArtworkStatus } from "@prisma/client";
+import { ArtworkSection } from "@prisma/client";
 
 import type { PictureItem } from "view/constants/pictures";
 import { PICTURE_ITEMS } from "view/constants/pictures";
@@ -30,11 +30,13 @@ function collectionMetaFromPictureItems(
           title: item.alt,
           medium: "Серия",
           text: COLLECTION_INTRO_FALLBACK,
+          status: "published",
         }
       : {
           title: item.alt,
           medium: "Масло, холст",
           text: item.alt,
+          status: "published",
         };
   }
   return out;
@@ -52,14 +54,13 @@ function staticBundle(): LandingArtworkBundle {
 
 
 /**
- * Опубликованные работы из БД; при отсутствии строк в нужной секции — fallback на статику.
+ * Работы из БД; при отсутствии строк в нужной секции — fallback на статику.
  */
 export async function getLandingArtworkBundle(): Promise<LandingArtworkBundle> {
   const fallback = staticBundle();
 
   try {
     const rows = await prisma.artwork.findMany({
-      where: { status: ArtworkStatus.published },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       include: { images: { orderBy: { sortOrder: "asc" } } },
     });
