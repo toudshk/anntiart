@@ -57,7 +57,7 @@ export function ArtworkMasonryGrid({ photos }: Props) {
             id="artwork-masonry-heading"
             className="text-xl font-semibold tracking-tight text-zinc-900 sm:text-2xl dark:text-zinc-50"
           >
-            Все фото работ и коллекции
+            Все фото работ и серий
           </h4>
           <p className="max-w-2xl text-xs leading-relaxed text-zinc-600 sm:text-sm dark:text-zinc-400">
             Крупные планы, детали, фрагменты и общие композиции. Нажмите на фото, чтобы

@@ -25,9 +25,9 @@ export function ArtworkFormHeader({
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           {mode === "create" && isFragmentCreate
-            ? "Новый фрагмент коллекции"
+            ? "Новый фрагмент серии"
             : mode === "create" && wantAutoSeriesKey && isCollection
-              ? "Новая коллекция"
+              ? "Новая серия"
               : mode === "create"
                 ? "Новая работа"
                 : "Редактирование работы"}

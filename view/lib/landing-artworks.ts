@@ -3,7 +3,6 @@ import { ArtworkSection } from "@prisma/client";
 import type { PictureItem } from "view/constants/pictures";
 import { PICTURE_ITEMS } from "view/constants/pictures";
 import type { WorkMeta } from "view/constants/works-meta";
-import { STATIC_WORKS_META } from "view/constants/works-meta";
 import { hasInteractiveCollectionSeries } from "view/lib/collection-series";
 import { dbArtworkToPictureItem, dbArtworkToWorkMeta } from "view/lib/map-db-artwork";
 import { prisma } from "view/lib/prisma";
@@ -45,16 +44,17 @@ function collectionMetaFromPictureItems(
 function staticBundle(): LandingArtworkBundle {
   const collection = PICTURE_ITEMS.filter((i) => i.section === "collection");
   return {
-    works: PICTURE_ITEMS.filter((i) => i.section === "works"),
+    works: [],
     collection,
-    workMeta: { ...STATIC_WORKS_META },
+    workMeta: {},
     collectionMeta: collectionMetaFromPictureItems(collection),
   };
 }
 
 
 /**
- * Работы из БД; при отсутствии строк в нужной секции — fallback на статику.
+ * Работы для главной страницы: блок "Работы" только из БД,
+ * для серии при отсутствии записей остаётся fallback на статику.
  */
 export async function getLandingArtworkBundle(): Promise<LandingArtworkBundle> {
   const fallback = staticBundle();
@@ -68,8 +68,7 @@ export async function getLandingArtworkBundle(): Promise<LandingArtworkBundle> {
     const dbWorks = rows.filter((r) => r.section === ArtworkSection.works);
     const dbColl = rows.filter((r) => r.section === ArtworkSection.collection);
 
-    const works =
-      dbWorks.length > 0 ? dbWorks.map(dbArtworkToPictureItem) : fallback.works;
+    const works = dbWorks.map(dbArtworkToPictureItem);
 
     const dbCollectionItems = dbColl.map(dbArtworkToPictureItem);
     const useDbCollection =
@@ -78,7 +77,7 @@ export async function getLandingArtworkBundle(): Promise<LandingArtworkBundle> {
       ? dbCollectionItems
       : fallback.collection;
 
-    const workMeta: Record<string, WorkMeta> = { ...STATIC_WORKS_META };
+    const workMeta: Record<string, WorkMeta> = {};
     for (const row of dbWorks) {
       workMeta[row.slug] = dbArtworkToWorkMeta(row);
     }

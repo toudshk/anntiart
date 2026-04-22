@@ -69,7 +69,7 @@ export function ArtworkSettingsSection({
                 {...register("section", { onChange: onSectionChange })}
               >
                 <option value="works">Работы (слайдер 3D)</option>
-                <option value="collection">Коллекция</option>
+                <option value="collection">Серия</option>
               </select>
             </label>
           ) : null}
@@ -119,7 +119,7 @@ export function ArtworkSettingsSection({
           <p className="mt-1.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
             Одно и то же значение у <span className="font-medium">общей композиции</span> и{" "}
             <span className="font-medium">каждого фрагмента</span> этой интерактивной
-            коллекции — тогда на сайте они не смешаются с другой серией, даже если в
+            серии — тогда на сайте они не смешаются с другой серией, даже если в
             списке перемешан порядок. Для одной серии на сайте можно оставить пустым
             (тогда используется порядок в списке как раньше).
           </p>

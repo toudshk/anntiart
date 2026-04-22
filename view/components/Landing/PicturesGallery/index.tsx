@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import { STATIC_WORKS_META, artworkStatusLabel } from "view/constants/works-meta";
+import { artworkStatusLabel } from "view/constants/works-meta";
 import { partitionCollectionSeries } from "view/lib/collection-series";
 import { formatPriceRub } from "view/lib/format-price";
 
@@ -16,7 +16,6 @@ import {
   buildMasonryPhotos,
   COLLECTION_SECTION_INTRO,
   FALLBACK_COLLECTION,
-  FALLBACK_WORKS,
   getWorkMetaFallback,
   type PicturesGalleryProps,
   seriesHeading,
@@ -32,9 +31,9 @@ export function PicturesGallery({
   workMeta: workMetaProp,
   collectionMeta: collectionMetaProp,
 }: PicturesGalleryProps = {}) {
-  const works = worksProp ?? FALLBACK_WORKS;
+  const works = worksProp ?? [];
   const collectionItems = collectionProp ?? FALLBACK_COLLECTION;
-  const workMeta = workMetaProp ?? STATIC_WORKS_META;
+  const workMeta = workMetaProp ?? {};
   const collectionMeta = collectionMetaProp ?? {};
 
   const collectionSeries = useMemo(
@@ -251,7 +250,7 @@ export function PicturesGallery({
                     activeCollectionSlide.main,
                     collectionMeta[activeCollectionSlide.main.id],
                   )
-                : "Коллекция"}
+                : "Серия"}
             </h4>
             <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
               {(activeCollectionSlide &&
@@ -269,7 +268,7 @@ export function PicturesGallery({
                 <div
                   className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4"
                   role="navigation"
-                  aria-label="Выбор коллекции"
+                  aria-label="Выбор серии"
                 >
                   <div className="flex items-center gap-2">
                     <button
@@ -301,7 +300,7 @@ export function PicturesGallery({
                   <div
                     className="flex flex-wrap justify-center gap-2"
                     role="tablist"
-                    aria-label="Коллекции"
+                    aria-label="Серии"
                   >
                     {collectionSeries.map((slide, idx) => {
                       const label = seriesHeading(

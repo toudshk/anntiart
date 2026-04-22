@@ -1,9 +1,6 @@
 import { PICTURE_ITEMS, type PictureItem } from "view/constants/pictures";
-import { STATIC_WORKS_META, type WorkMeta } from "view/constants/works-meta";
+import type { WorkMeta } from "view/constants/works-meta";
 
-export const FALLBACK_WORKS = PICTURE_ITEMS.filter(
-  (item) => item.section === "works",
-);
 export const FALLBACK_COLLECTION = PICTURE_ITEMS.filter(
   (item) => item.section === "collection",
 );
@@ -28,16 +25,12 @@ export const COLLECTION_SECTION_INTRO =
   "Одна сцена на мольберте объединяет несколько эскизов — проведите курсором по композиции, чтобы увидеть каждую мини-картину отдельно.";
 
 export function getWorkMetaFallback(activeWork: PictureItem | undefined): WorkMeta {
-  return (
-    {
-      status: "published",
-      ...(STATIC_WORKS_META[activeWork?.id ?? ""] ?? {
-      title: activeWork?.alt ?? "Работа",
-      medium: "Масло, холст",
-      text: "Описание будет добавлено позже.",
-      }),
-    }
-  );
+  return {
+    title: activeWork?.alt ?? "Работа",
+    medium: "Масло, холст",
+    text: "Описание будет добавлено позже.",
+    status: "published",
+  };
 }
 
 /** Заголовок серии над блоком: из title общей композиции или часть alt до « — ». */

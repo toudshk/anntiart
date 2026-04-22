@@ -50,7 +50,7 @@ function ArtworkRow({
         <p className="mt-0.5 break-words text-xs leading-snug text-zinc-500">
           {subtitle ?? (
             <>
-              {a.section === "collection" ? "Коллекция" : "Работы"} ·{" "}
+              {a.section === "collection" ? "Серия" : "Работы"} ·{" "}
               {a.status} · {a.slug}
             </>
           )}
@@ -117,7 +117,7 @@ export default async function AdminHomePage() {
               Админка
             </h1>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              Работы и коллекция на лендинге
+              Работы и серии на лендинге
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -156,13 +156,13 @@ export default async function AdminHomePage() {
           <section>
             <div className="mb-3 flex min-h-10 flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <h2 className="text-lg font-semibold leading-none text-zinc-900 dark:text-zinc-50">
-                Коллекция
+                Серии
               </h2>
               <Link
                 href="/admin/artworks/new?preset=collection-main"
                 className={btnPrimary}
               >
-                Добавить коллекцию
+                Добавить серию
               </Link>
             </div>
 

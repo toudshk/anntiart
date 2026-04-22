@@ -1,6 +1,6 @@
 /**
- * Картины из `public/pictures` и подпапки `collection`.
- * Данные с лендинга могут подменяться записями из БД (см. getLandingArtworkBundle).
+ * Статический fallback только для серии из `public/pictures/collection`.
+ * Блок отдельных работ на главной странице наполняется только из БД.
  */
 export type CollectionHotspot = { x: number; y: number; w: number; h: number };
 
@@ -24,62 +24,6 @@ export type PictureItem = {
 };
 
 export const PICTURE_ITEMS: PictureItem[] = [
-  {
-    id: "black-girl-2",
-    src: "/pictures/black-girl-2.jpg",
-    alt: "Работа — black-girl-2",
-    aspectRatio: "2/3",
-    section: "works",
-  },
-  {
-    id: "black-girl",
-    src: "/pictures/black-girl.jpg",
-    alt: "Работа — black-girl",
-    aspectRatio: "2/3",
-    section: "works",
-  },
-  {
-    id: "red-girl",
-    src: "/pictures/red-girl.jpg",
-    alt: "Работа — red-girl",
-    aspectRatio: "2/3",
-    section: "works",
-  },
-  {
-    id: "white-girl",
-    src: "/pictures/white-girl.jpg",
-    alt: "Работа — white-girl",
-    aspectRatio: "2/3",
-    section: "works",
-  },
-  {
-    id: "white-girls",
-    src: "/pictures/white-girls.jpg",
-    alt: "Работа — white-girls",
-    aspectRatio: "9/20",
-    section: "works",
-  },
-  {
-    id: "black-girls",
-    src: "/pictures/black-girls.jpg",
-    alt: "Работа — black-girls",
-    aspectRatio: "11/10",
-    section: "works",
-  },
-  {
-    id: "black-girl-3",
-    src: "/pictures/black-girl-3.jpg",
-    alt: "Работа — black-girl-3",
-    aspectRatio: "9/19",
-    section: "works",
-  },
-  {
-    id: "white-girl-2",
-    src: "/pictures/white-girl-2.jpg",
-    alt: "Работа — white-girl-2",
-    aspectRatio: "2/3",
-    section: "works",
-  },
   {
     id: "collection-one",
     src: "/pictures/collection/one.jpg",
