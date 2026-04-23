@@ -61,7 +61,8 @@ export async function getLandingArtworkBundle(): Promise<LandingArtworkBundle> {
 
   try {
     const rows = await prisma.artwork.findMany({
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      /* Как в админке: sortOrder, при равенстве — сначала новые. */
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
       include: { images: { orderBy: { sortOrder: "asc" } } },
     });
 

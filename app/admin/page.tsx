@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 
 import { AdminDatabaseError } from "view/components/Admin/AdminDatabaseError";
+import { AdminWorksReorderList } from "view/components/Admin/AdminWorksReorderList";
 import { AdminDeleteArtworkButton } from "view/components/Admin/AdminDeleteArtworkButton";
 import { AdminSignOut } from "view/components/Admin/AdminSignOut";
 import {
@@ -141,16 +142,19 @@ export default async function AdminHomePage() {
                 Добавить работу
               </Link>
             </div>
-            <ul className="space-y-2">
-              {worksRows.map((a) => (
-                <ArtworkRow key={a.id} a={a} />
-              ))}
-            </ul>
-            {worksRows.length === 0 ? (
+            {worksRows.length ? (
+              <>
+                <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  Порядок в списке совпадает с блоком «Картины» на сайте. Стрелки ↑↓
+                  меняют местами соседние записи.
+                </p>
+                <AdminWorksReorderList items={worksRows} />
+              </>
+            ) : (
               <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
                 Пока нет работ в разделе «Работы».
               </p>
-            ) : null}
+            )}
           </section>
 
           <section>
