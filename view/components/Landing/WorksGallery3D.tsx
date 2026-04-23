@@ -21,6 +21,53 @@ function parseAspectRatio(ar: string | undefined): number {
   return a / b;
 }
 
+function ChevronLeftSm({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        d="M15 6L9 12L15 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightSm({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <path
+        d="M9 6L15 12L9 18"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+const photoNavBtnClass =
+  "inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-300/90 bg-gradient-to-b from-white to-zinc-50/95 text-zinc-700 shadow-[0_4px_14px_-6px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,0.95)] transition hover:border-zinc-400 hover:text-zinc-900 hover:shadow-md active:scale-[0.96] dark:border-zinc-600 dark:from-zinc-800 dark:to-zinc-900/95 dark:text-zinc-200 dark:hover:text-white";
+
 function createFrameTexture(): THREE.CanvasTexture {
   const canvas = document.createElement("canvas");
   canvas.width = 128;
@@ -66,12 +113,7 @@ function createFrameTexture(): THREE.CanvasTexture {
  * Объёмный параллелепипед без скруглений: одна текстура по всему мешу.
  * Базовый поворот — стоящий «портрет», чуть развёрнут к камере.
  */
-function buildFramedPainting(
-  canvasW: number,
-  canvasH: number,
-  src: string,
-  texLoader: THREE.TextureLoader,
-): THREE.Group {
+function buildFramedPainting(canvasW: number, canvasH: number): THREE.Group {
   const depth = 0.16;
 
   const pivot = new THREE.Group();
@@ -170,22 +212,6 @@ function buildFramedPainting(
   frameRight.position.set(canvasW / 2 + frameT / 2 - frameOverlap, 0, frameZ);
   pivot.add(frameRight);
 
-  const applyTex = (tex: THREE.Texture) => {
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
-    tex.generateMipmaps = true;
-    frontMat.map = tex;
-    frontMat.needsUpdate = true;
-  };
-
-  const onErr = () => {
-    frontMat.map = null;
-    frontMat.color.setHex(0x9ca3af);
-    frontMat.needsUpdate = true;
-  };
-
-  texLoader.load(src, applyTex, undefined, onErr);
-
   pivot.userData.paintMat = frontMat;
   pivot.userData.extraMats = [canvasBaseMat, sideMat, backMat, frameMat];
   pivot.userData.extraTextures = [frameTex];
@@ -244,6 +270,7 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
       });
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
     } catch {
       return;
     }
@@ -251,6 +278,7 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 120);
     const texLoader = new THREE.TextureLoader();
+    texLoader.setCrossOrigin("anonymous");
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.78);
     scene.add(ambient);
@@ -333,7 +361,7 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
     const plateW = narrowLayout ? 1.82 : 3.05;
     const baseAspect = parseAspectRatio(item.aspectRatio);
     const baseHeight = plateW / baseAspect;
-    const g = buildFramedPainting(plateW, baseHeight, item.src, texLoader);
+    const g = buildFramedPainting(plateW, baseHeight);
     g.position.set(0, 0, 0);
     g.userData.basePos = new THREE.Vector3(0, 0, 0);
     g.userData.aspectStretch = 1;
@@ -522,7 +550,7 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
   }, [item?.id, photoUrls.join("|")]);
 
   useEffect(() => {
-    if (!item) return;
+    if (!item?.src?.trim()) return;
     const runtime = runtimeRef.current;
     if (!runtime) return;
 
@@ -534,42 +562,60 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
     runtime.fitCamera();
     textureReqRef.current += 1;
     const reqId = textureReqRef.current;
+    const mat = runtime.frontMat;
 
-    runtime.texLoader.load(
-      item.src,
-      (tex) => {
-        if (textureReqRef.current !== reqId) {
-          tex.dispose();
-          return;
-        }
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.minFilter = THREE.LinearMipmapLinearFilter;
-        tex.generateMipmaps = true;
-        const mat = runtime.frontMat;
-        const old = prevTextureRef.current;
-        fadeTweenRef.current?.kill();
-        fadeTweenRef.current = gsap.to(mat, {
-          opacity: 0.78,
-          duration: 0.11,
-          ease: "power2.out",
-          onComplete: () => {
-            runtime.frontMat.map = tex;
-            runtime.frontMat.needsUpdate = true;
-            prevTextureRef.current = tex;
-            old?.dispose();
-            fadeTweenRef.current = gsap.to(mat, {
-              opacity: 1,
-              duration: 0.14,
-              ease: "power2.out",
-            });
-          },
-        });
-      },
-      undefined,
-      () => {
-        // При ошибке не сбрасываем текущую текстуру, чтобы не было белой вспышки.
-      },
-    );
+    const applyTexture = (tex: THREE.Texture) => {
+      if (textureReqRef.current !== reqId) {
+        tex.dispose();
+        return;
+      }
+      if (runtimeRef.current?.frontMat !== mat) {
+        tex.dispose();
+        return;
+      }
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      tex.generateMipmaps = true;
+      const old = prevTextureRef.current;
+      fadeTweenRef.current?.kill();
+      mat.opacity = 1;
+      fadeTweenRef.current = gsap.to(mat, {
+        opacity: 0.78,
+        duration: 0.11,
+        ease: "power2.out",
+        onComplete: () => {
+          if (textureReqRef.current !== reqId || runtimeRef.current?.frontMat !== mat) {
+            tex.dispose();
+            return;
+          }
+          mat.map = tex;
+          mat.needsUpdate = true;
+          prevTextureRef.current = tex;
+          old?.dispose();
+          fadeTweenRef.current = gsap.to(mat, {
+            opacity: 1,
+            duration: 0.14,
+            ease: "power2.out",
+            onComplete: () => {
+              if (textureReqRef.current !== reqId || runtimeRef.current?.frontMat !== mat) {
+                return;
+              }
+              mat.opacity = 1;
+            },
+          });
+        },
+      });
+    };
+
+    const onErr = () => {
+      if (textureReqRef.current !== reqId || runtimeRef.current?.frontMat !== mat) return;
+      mat.map = null;
+      mat.color.setHex(0x9ca3af);
+      mat.opacity = 1;
+      mat.needsUpdate = true;
+    };
+
+    runtime.texLoader.load(item.src, applyTexture, undefined, onErr);
   }, [item?.id, item?.src, item?.aspectRatio]);
 
   const gallery = photoUrls.length > 0 ? photoUrls : item?.src ? [item.src] : [];
@@ -584,19 +630,36 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
       aria-label="Картины в объёме"
     >
       {item ? (
-        <button
-          type="button"
-          onClick={() => setView3d((v) => !v)}
-          className="absolute right-2 top-2 z-20 rounded-full border border-zinc-400/90 bg-white/90 px-3 py-1.5 text-xs font-medium text-zinc-800 shadow-sm backdrop-blur-sm transition hover:bg-white dark:border-zinc-600 dark:bg-zinc-900/85 dark:text-zinc-100 dark:hover:bg-zinc-800"
-          aria-pressed={view3d}
-          aria-label={
-            view3d
-              ? "Показать обычную фотографию вместо 3D"
-              : "Вернуть объёмный 3D-вид"
-          }
+        <div
+          className="absolute right-2 top-2 z-20 flex rounded-full border border-zinc-300/80 bg-zinc-200/55 p-1 shadow-[0_6px_22px_-10px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.5)] backdrop-blur-sm dark:border-zinc-600/70 dark:bg-zinc-950/70 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_28px_-10px_rgba(0,0,0,0.55)]"
+          role="group"
+          aria-label="Режим просмотра"
         >
-          {view3d ? "Фото" : "3D"}
-        </button>
+          <button
+            type="button"
+            onClick={() => setView3d(true)}
+            aria-pressed={view3d}
+            className={
+              view3d
+                ? "min-w-[4.25rem] rounded-full border border-zinc-300/60 bg-gradient-to-b from-white to-zinc-50 px-3 py-2 text-center text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-zinc-900 shadow-[0_2px_10px_-4px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.9)] dark:border-zinc-500/50 dark:from-zinc-600 dark:to-zinc-800 dark:text-zinc-50 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                : "min-w-[4.25rem] rounded-full px-3 py-2 text-center text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
+            }
+          >
+            3D
+          </button>
+          <button
+            type="button"
+            onClick={() => setView3d(false)}
+            aria-pressed={!view3d}
+            className={
+              !view3d
+                ? "min-w-[4.25rem] rounded-full border border-zinc-300/60 bg-gradient-to-b from-white to-zinc-50 px-3 py-2 text-center text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-zinc-900 shadow-[0_2px_10px_-4px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.9)] dark:border-zinc-500/50 dark:from-zinc-600 dark:to-zinc-800 dark:text-zinc-50 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                : "min-w-[4.25rem] rounded-full px-3 py-2 text-center text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-zinc-500 transition hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
+            }
+          >
+            Фото
+          </button>
+        </div>
       ) : null}
       {!view3d && item ? (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[linear-gradient(180deg,#e8e6e2_0%,#eceae7_100%)] dark:bg-[linear-gradient(180deg,#1a1f26_0%,#12161c_100%)]">
@@ -613,20 +676,20 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
                 onClick={() =>
                   setPhotoIdx((v) => (v - 1 + gallery.length) % gallery.length)
                 }
-                className="absolute left-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-zinc-400/90 bg-white/85 px-2.5 py-1 text-xs font-medium text-zinc-800 shadow-sm transition hover:bg-white dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                className={`absolute left-2 top-1/2 z-20 -translate-y-1/2 ${photoNavBtnClass}`}
                 aria-label="Предыдущее фото"
               >
-                ←
+                <ChevronLeftSm />
               </button>
               <button
                 type="button"
                 onClick={() => setPhotoIdx((v) => (v + 1) % gallery.length)}
-                className="absolute right-2 top-1/2 z-20 -translate-y-1/2 rounded-full border border-zinc-400/90 bg-white/85 px-2.5 py-1 text-xs font-medium text-zinc-800 shadow-sm transition hover:bg-white dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                className={`absolute right-2 top-1/2 z-20 -translate-y-1/2 ${photoNavBtnClass}`}
                 aria-label="Следующее фото"
               >
-                →
+                <ChevronRightSm />
               </button>
-              <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-zinc-300/80 bg-white/80 px-2 py-1 shadow-sm dark:border-zinc-600 dark:bg-zinc-900/75">
+              <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-zinc-300/85 bg-white/85 px-2.5 py-1.5 shadow-[0_4px_16px_-8px_rgba(15,23,42,0.18)] backdrop-blur-sm dark:border-zinc-600 dark:bg-zinc-900/85">
                 {gallery.map((_, idx) => (
                   <button
                     key={`photo-dot-${idx}`}
