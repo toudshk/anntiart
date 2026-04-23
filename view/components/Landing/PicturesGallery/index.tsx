@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -218,13 +219,14 @@ export function PicturesGallery({
                   {activeMeta.detailImageUrls.slice(0, 6).map((url, idx) => (
                     <div
                       key={`${activeWork?.id ?? "work"}-detail-${idx}`}
-                      className="overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-900/45"
+                      className="relative aspect-square overflow-hidden rounded-lg border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-900/45"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={url}
                         alt={`${activeMeta.title} — деталь ${idx + 1}`}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="(max-width: 1024px) 33vw, 10rem"
+                        className="object-cover"
                       />
                     </div>
                   ))}
