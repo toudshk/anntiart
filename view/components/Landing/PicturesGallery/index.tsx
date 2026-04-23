@@ -157,7 +157,7 @@ export function PicturesGallery({
       />
       <div className="relative z-10 mx-auto max-w-7xl overflow-x-visible overflow-y-visible pt-4">
         <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_21rem] lg:grid-rows-[auto_1fr] lg:items-start lg:gap-8">
-          <div className="order-1 w-full lg:order-none lg:col-start-2 lg:row-start-1">
+          <div className="order-1 w-full rounded-2xl border border-zinc-200/85 bg-white/55 p-2.5 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-sm dark:border-zinc-700/75 dark:bg-zinc-900/45 dark:shadow-[0_12px_32px_-16px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.05)] lg:order-none lg:col-start-2 lg:row-start-1">
             <GalleryWorkNav
               works={works}
               activeIndex={activeIndex}
@@ -178,26 +178,29 @@ export function PicturesGallery({
           <aside
             data-art-note
             ref={noteRef}
-            className="order-3 text-zinc-700 dark:text-zinc-300 lg:order-none lg:col-start-2 lg:row-start-2"
+            className="order-3 rounded-2xl border border-zinc-200/90 bg-gradient-to-b from-white/80 to-zinc-100/45 p-4 text-zinc-700 shadow-[0_14px_34px_-22px_rgba(15,23,42,0.35),inset_0_1px_0_rgba(255,255,255,0.75)] dark:border-zinc-700/85 dark:from-zinc-900/72 dark:to-zinc-950/55 dark:text-zinc-300 dark:shadow-[0_18px_36px_-20px_rgba(0,0,0,0.58),inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-5 lg:order-none lg:col-start-2 lg:row-start-2"
             aria-label={`Описание картины ${activeMeta.title}`}
           >
-            <h3 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+            <h3
+              className="min-w-0 truncate text-lg font-semibold leading-snug tracking-tight text-zinc-900 sm:text-[1.2rem] dark:text-zinc-100"
+              title={activeMeta.title}
+            >
               {activeMeta.title}
             </h3>
-            <p className="mt-1 text-xs font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
               {activeMeta.medium}
             </p>
             {artworkStatusLabel(activeMeta.status) ? (
-              <p className="mt-1 inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2.5 py-0.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200">
+              <p className="mt-2 inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2.5 py-0.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200">
                 {artworkStatusLabel(activeMeta.status)}
               </p>
             ) : null}
             {activeMeta.priceRub != null ? (
-              <p className="mt-1 text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
+              <p className="mt-2 text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
                 {formatPriceRub(activeMeta.priceRub)}
               </p>
             ) : null}
-            <div className="mt-2 space-y-1.5">
+            <div className="mt-3 space-y-1.5 border-t border-zinc-200/65 pt-3 dark:border-zinc-700/65">
               {activeTextLines.map((line, idx) => (
                 <p
                   key={`${activeWork?.id ?? "work"}-${idx}`}

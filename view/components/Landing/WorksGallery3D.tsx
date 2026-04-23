@@ -303,8 +303,10 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
       new THREE.ShadowMaterial({ opacity: 0.32, color: 0x0a0a0c }),
     );
     shadowFloor.rotation.x = -Math.PI / 2;
+    const initialLayoutW = root.clientWidth || window.innerWidth;
+    const initialNarrowLayout = initialLayoutW < 768;
     /** «Земля»: горизонталь под картиной (мир Y). */
-    const groundY = -1.42;
+    const groundY = initialNarrowLayout ? -1.1 : -1.42;
     shadowFloor.position.set(0.55, groundY, 0.38);
     shadowFloor.receiveShadow = true;
     scene.add(shadowFloor);
@@ -349,7 +351,7 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
         const distForWidth = size.x / 2 / halfW;
         /* На узком экране чуть дальше камера — картина визуально меньше */
         const isNarrow = (root.clientWidth || window.innerWidth) < 768;
-        const slack = isNarrow ? 1.52 : 1.34;
+        const slack = isNarrow ? 1.36 : 1.34;
         const dist = Math.max(distForHeight, distForWidth) * slack + 0.08;
         camera.position.set(center.x, center.y, center.z + dist);
         camera.lookAt(center);
@@ -358,7 +360,7 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
 
     const layoutW = root.clientWidth || window.innerWidth;
     const narrowLayout = layoutW < 768;
-    const plateW = narrowLayout ? 1.82 : 3.05;
+    const plateW = narrowLayout ? 2.18 : 3.05;
     const baseAspect = parseAspectRatio(item.aspectRatio);
     const baseHeight = plateW / baseAspect;
     const g = buildFramedPainting(plateW, baseHeight);
@@ -625,7 +627,7 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
   return (
     <div
       ref={rootRef}
-      className="relative mx-auto h-[min(62svh,420px)] min-h-[min(62svh,420px)] w-[76vw] max-w-[100%] shrink-0 sm:h-[min(74svh,560px)] sm:min-h-[min(74svh,560px)] sm:w-[86vw] md:h-[82svh] md:min-h-[82svh] md:w-[90vw] lg:h-[90dvh] lg:min-h-[90dvh] lg:w-full"
+      className="relative mx-auto h-[clamp(21rem,58svh,28rem)] min-h-[clamp(21rem,58svh,28rem)] w-[84vw] max-w-[100%] shrink-0 sm:h-[min(74svh,560px)] sm:min-h-[min(74svh,560px)] sm:w-[86vw] md:h-[82svh] md:min-h-[82svh] md:w-[90vw] lg:h-[90dvh] lg:min-h-[90dvh] lg:w-full"
       role="region"
       aria-label="Картины в объёме"
     >
