@@ -235,9 +235,9 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fadeTweenRef = useRef<gsap.core.Tween | null>(null);
   const textureReqRef = useRef(0);
-  const [view3d, setView3d] = useState(true);
+  const [view3d, setView3d] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
-  const view3dRef = useRef(true);
+  const view3dRef = useRef(false);
   useEffect(() => {
     view3dRef.current = view3d;
   }, [view3d]);

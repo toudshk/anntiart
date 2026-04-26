@@ -22,6 +22,7 @@ export const emptyCreate = (): ArtworkFormInitial => ({
   alt: "",
   description: "",
   medium: "",
+  completedOn: "",
   priceRub: null,
   section: "works",
   status: "published",

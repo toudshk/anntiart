@@ -83,6 +83,18 @@ export const createArtworkSchema = z
         "Ключ серии: латиница, цифры, дефис или подчёркивание",
       )
       .transform((s) => (!s ? undefined : s)),
+    /** Дата создания работы на холсте, ГГГГ-ММ-ДД; пусто — не задана. */
+    completedOn: z
+      .string()
+      .max(10)
+      .optional()
+      .transform((s) => {
+        const t = (s ?? "").trim();
+        return t === "" ? undefined : t;
+      })
+      .refine((s) => s === undefined || /^\d{4}-\d{2}-\d{2}$/.test(s), {
+        message: "Дата создания: формат ГГГГ-ММ-ДД",
+      }),
   })
   .superRefine((val, ctx) => {
     if (!val.imageUrl && (!val.imageUrls || val.imageUrls.length === 0)) {
@@ -131,5 +143,17 @@ export const patchArtworkSchema = z
       .regex(/^[a-zA-Z0-9_-]+$/)
       .nullable()
       .optional(),
+    completedOn: z
+      .union([z.string().max(10), z.null()])
+      .optional()
+      .transform((s) => {
+        if (s === undefined) return undefined;
+        if (s === null) return null;
+        const t = s.trim();
+        return t === "" ? null : t;
+      })
+      .refine((s) => s === undefined || s === null || /^\d{4}-\d{2}-\d{2}$/.test(s), {
+        message: "Дата создания: формат ГГГГ-ММ-ДД",
+      }),
   })
   .strict();

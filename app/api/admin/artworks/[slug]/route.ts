@@ -87,6 +87,16 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
     }
   }
 
+  const completedOnPatch =
+    body.completedOn === undefined
+      ? {}
+      : {
+          completedOn:
+            body.completedOn === null
+              ? null
+              : new Date(`${body.completedOn}T12:00:00.000Z`),
+        };
+
   try {
     const updated = await prisma.artwork.update({
       where: { slug },
@@ -129,6 +139,7 @@ export async function PATCH(req: Request, ctx: RouteCtx) {
           body.collectionSeriesKey !== undefined
             ? body.collectionSeriesKey
             : undefined,
+        ...completedOnPatch,
         publishedAt,
       },
       include: {

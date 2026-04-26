@@ -9,6 +9,7 @@ import {
 import { AdminDatabaseError } from "view/components/Admin/AdminDatabaseError";
 import { authOptions } from "view/lib/auth";
 import { isDbConnectionError } from "view/lib/is-db-connection-error";
+import { formatDateOnlyForInput } from "view/lib/artwork-completed-on";
 import { prisma } from "view/lib/prisma";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -44,6 +45,7 @@ export default async function EditArtworkPage({ params }: Props) {
     alt: artwork.alt,
     description: artwork.description,
     medium: artwork.medium,
+    completedOn: formatDateOnlyForInput(artwork.completedOn),
     priceRub: artwork.priceRub,
     section: artwork.section,
     status: artwork.status,

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { artworkStatusLabel } from "view/constants/works-meta";
+import { shouldUseUnoptimizedNextImage } from "view/lib/artwork-image-url";
 
 import type { MasonryPhoto } from "./shared";
 
@@ -80,6 +81,7 @@ export function ArtworkMasonryGrid({ photos }: Props) {
                   width={900}
                   height={1200}
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  unoptimized={shouldUseUnoptimizedNextImage(photo.src)}
                   className="h-auto w-full transition duration-500 group-hover:scale-[1.02]"
                 />
               </div>
@@ -159,6 +161,7 @@ export function ArtworkMasonryGrid({ photos }: Props) {
               width={1600}
               height={2200}
               sizes="92vw"
+              unoptimized={shouldUseUnoptimizedNextImage(activePhoto.src)}
               className="max-h-[82vh] max-w-full rounded-2xl object-contain shadow-[0_32px_64px_-28px_rgba(0,0,0,0.8)]"
             />
             <figcaption className="mt-3 text-center text-sm text-white/88">

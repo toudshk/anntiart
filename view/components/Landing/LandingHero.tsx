@@ -5,6 +5,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+import { HeroArtStrip, type HeroArtStripItem } from "./HeroArtStrip";
+
 gsap.registerPlugin(ScrollTrigger);
 
 /** Доп. скролл после первого экрана (липкий hero). GSAP ScrollTrigger надёжнее с vh, не dvh. */
@@ -47,7 +49,12 @@ function ScrollDownHint() {
   );
 }
 
-export function LandingHero() {
+type Props = {
+  /** Превью работ для «стены» над заголовком; пустой массив — блок не показываем. */
+  artStrip?: HeroArtStripItem[];
+};
+
+export function LandingHero({ artStrip = [] }: Props) {
   const rootRef = useRef<HTMLElement>(null);
   const catRef = useRef<HTMLElement>(null);
   const lastWidthRef = useRef<number>(0);
@@ -55,17 +62,30 @@ export function LandingHero() {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      const section = rootRef.current;
+      if (section?.querySelector("[data-gsap='hero-strip-item']")) {
+        gsap.from("[data-gsap='hero-strip-item']", {
+          opacity: 0,
+          y: 20,
+          scale: 0.94,
+          stagger: 0.055,
+          duration: 0.52,
+          delay: 0.06,
+          ease: "power2.out",
+        });
+      }
       gsap.from("[data-gsap='hero-title']", {
         opacity: 0,
         y: 28,
         duration: 0.85,
         ease: "power3.out",
+        delay: artStrip.length ? 0.14 : 0,
       });
       gsap.from("[data-gsap='hero-text']", {
         opacity: 0,
         y: 16,
         duration: 0.7,
-        delay: 0.12,
+        delay: artStrip.length ? 0.22 : 0.12,
         ease: "power2.out",
       });
       gsap.from("[data-gsap='scroll-hint']", {
@@ -90,7 +110,6 @@ export function LandingHero() {
         delay: 1.1,
       });
 
-      const section = rootRef.current;
       const scaleRoot = section?.querySelector<HTMLElement>(
         "[data-gsap='hero-title-scale']",
       );
@@ -140,7 +159,7 @@ export function LandingHero() {
       window.removeEventListener("resize", onResize);
       ctx.revert();
     };
-  }, []);
+  }, [artStrip.length]);
 
   useLayoutEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -180,12 +199,17 @@ export function LandingHero() {
       </div>
       <div
         data-hero-sticky
-        className="sticky top-0 flex h-svh flex-col items-center justify-center gap-6 overflow-x-hidden px-6 pt-48 text-center will-change-[filter,opacity]"
+        className={
+          artStrip.length > 0
+            ? "sticky top-0 flex h-svh flex-col items-center justify-center gap-5 overflow-x-visible overflow-y-visible px-3 pt-24 text-center will-change-[filter,opacity] sm:gap-6 sm:px-10 sm:pt-28 lg:px-14 lg:pt-32"
+            : "sticky top-0 flex h-svh flex-col items-center justify-center gap-6 overflow-x-hidden px-6 pt-48 text-center will-change-[filter,opacity]"
+        }
       >
         <div
           data-gsap="hero-title-scale"
-          className="relative z-10 w-full  origin-center will-change-transform"
+          className="relative z-10 flex w-full flex-col items-center origin-center will-change-transform"
         >
+          {artStrip.length > 0 ? <HeroArtStrip items={artStrip} /> : null}
           <h1
             id="landing-hero-heading"
             data-gsap="hero-title"

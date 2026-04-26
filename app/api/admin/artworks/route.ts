@@ -72,6 +72,9 @@ export async function POST(req: Request) {
         aspectRatio: data.aspectRatio,
         isCollectionComposite: data.isCollectionComposite,
         sortOrder: data.sortOrder,
+        completedOn: data.completedOn
+          ? new Date(`${data.completedOn}T12:00:00.000Z`)
+          : null,
         collectionSeriesKey:
           data.section === "collection" && data.collectionSeriesKey
             ? data.collectionSeriesKey

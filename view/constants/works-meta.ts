@@ -1,6 +1,8 @@
 export type WorkMeta = {
   title: string;
   medium: string;
+  /** Дата создания работы на холсте, ISO `ГГГГ-ММ-ДД`. */
+  completedOn?: string | null;
   text: string;
   status?: "draft" | "published" | "sold" | "reserved";
   /** Цена в рублях; не задана — на сайте не показываем. */

@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import type { WorkMeta } from "view/constants/works-meta";
+import { shouldUseUnoptimizedNextImage } from "view/lib/artwork-image-url";
 
 import { PicturesGallery } from "./PicturesGallery";
 import type { PicturesGalleryProps } from "./PicturesGallery";
@@ -41,6 +42,7 @@ export function PicturesGallerySsr(props: PicturesGalleryProps) {
                   width={baseW}
                   height={h}
                   sizes="640px"
+                  unoptimized={shouldUseUnoptimizedNextImage(w.src)}
                   priority={idx === 0}
                   {...(idx > 0 ? { loading: "lazy" as const } : {})}
                 />

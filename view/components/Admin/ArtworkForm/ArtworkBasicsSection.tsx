@@ -72,6 +72,14 @@ export function ArtworkBasicsSection({
           {...register("medium", { required: true })}
         />
       </label>
+
+      <label className={labelClass}>
+        <span>Дата создания работы</span>
+        <input type="date" className={fieldClass} {...register("completedOn")} />
+        <span className="mt-0.5 block text-xs font-normal text-zinc-500 dark:text-zinc-400">
+          Необязательно; отображается на сайте рядом с материалом.
+        </span>
+      </label>
     </section>
   );
 }

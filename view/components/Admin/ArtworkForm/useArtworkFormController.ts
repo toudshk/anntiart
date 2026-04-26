@@ -236,6 +236,9 @@ export function useArtworkFormController(props: Props) {
             isColl && submittedValues.collectionSeriesKey.trim()
               ? submittedValues.collectionSeriesKey.trim()
               : undefined,
+          ...(submittedValues.completedOn.trim()
+            ? { completedOn: submittedValues.completedOn.trim() }
+            : {}),
           imageUrl: normalizedImageUrls[0],
           imageUrls: normalizedImageUrls,
         };
@@ -262,6 +265,9 @@ export function useArtworkFormController(props: Props) {
         hotspotH: showHotspots ? submittedValues.hotspotH : null,
         collectionSeriesKey: isColl
           ? submittedValues.collectionSeriesKey.trim() || null
+          : null,
+        completedOn: submittedValues.completedOn.trim()
+          ? submittedValues.completedOn.trim()
           : null,
       };
       if (normalizedImageUrls.length > 0) {

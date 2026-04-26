@@ -7,6 +7,8 @@ export type ArtworkFormInitial = {
   alt: string;
   description: string;
   medium: string;
+  /** Дата создания работы на холсте (`input type="date"`). */
+  completedOn: string;
   priceRub: number | null;
   section: ArtworkSection;
   status: ArtworkStatus;

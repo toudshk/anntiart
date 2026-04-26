@@ -7,7 +7,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { artworkStatusLabel } from "view/constants/works-meta";
 import { partitionCollectionSeries } from "view/lib/collection-series";
+import { formatCompletedOnRu } from "view/lib/artwork-completed-on";
 import { formatPriceRub } from "view/lib/format-price";
+import { shouldUseUnoptimizedNextImage } from "view/lib/artwork-image-url";
 
 import { WorksGallery3D } from "../WorksGallery3D";
 import { ArtworkMasonryGrid } from "./ArtworkMasonryGrid";
@@ -190,6 +192,11 @@ export function PicturesGallery({
             <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
               {activeMeta.medium}
             </p>
+            {activeMeta.completedOn ? (
+              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                Создана: {formatCompletedOnRu(activeMeta.completedOn)}
+              </p>
+            ) : null}
             {artworkStatusLabel(activeMeta.status) ? (
               <p className="mt-2 inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2.5 py-0.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200">
                 {artworkStatusLabel(activeMeta.status)}
@@ -229,6 +236,7 @@ export function PicturesGallery({
                         alt={`${activeMeta.title} — деталь ${idx + 1}`}
                         fill
                         sizes="(max-width: 1024px) 33vw, 10rem"
+                        unoptimized={shouldUseUnoptimizedNextImage(url)}
                         className="object-cover"
                       />
                     </div>

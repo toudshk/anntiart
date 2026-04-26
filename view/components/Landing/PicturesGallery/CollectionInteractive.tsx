@@ -6,6 +6,7 @@ import Image from "next/image";
 import type { PictureItem } from "view/constants/pictures";
 import { artworkStatusLabel, type WorkMeta } from "view/constants/works-meta";
 import { formatPriceRub } from "view/lib/format-price";
+import { shouldUseUnoptimizedNextImage } from "view/lib/artwork-image-url";
 
 type Props = {
   main: PictureItem | null;
@@ -82,6 +83,7 @@ export function CollectionInteractive({
                 alt={main.alt}
                 fill
                 sizes="(max-width: 1024px) 100vw, 62rem"
+                unoptimized={shouldUseUnoptimizedNextImage(main.src)}
                 className="object-cover transition-[filter] duration-500 group-hover:brightness-[1.02] pointer-events-none"
               />
               <div
@@ -180,6 +182,7 @@ export function CollectionInteractive({
                     alt={activePicture.alt}
                     fill
                     sizes="(max-width: 1024px) 100vw, (max-width: 1536px) 42vw, 36rem"
+                    unoptimized={shouldUseUnoptimizedNextImage(activePicture.src)}
                     className="object-cover"
                   />
                 </div>
