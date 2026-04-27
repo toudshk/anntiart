@@ -197,10 +197,10 @@ export function LandingHero() {
         className="sticky top-0 flex h-svh w-full flex-col overflow-hidden will-change-[filter,opacity,transform]"
       >
         <div className="relative isolate z-10 min-h-0 w-full flex-1 overflow-hidden">
-          {/* Фото справа, под слоем текста (z-0) — вне scale, остаётся на месте при скролле */}
+          {/* Фото справа: на мобильных не показываем — только фон hero и текст */}
           <div
             data-gsap="hero-photo"
-            className="absolute inset-y-0 right-0 z-0 w-[min(88%,24rem)] sm:w-[min(85%,30rem)] md:w-[min(70%,36rem)] lg:w-[min(46vw,38rem)] xl:w-[min(60vw,40rem)]"
+            className="absolute inset-y-0 right-0 z-0 hidden w-[min(70%,36rem)] md:block lg:w-[min(46vw,38rem)] xl:w-[min(60vw,40rem)]"
           >
             <div className="absolute inset-0 translate-x-3 sm:translate-x-4 md:translate-x-5 lg:translate-x-6 xl:translate-x-8">
               <div className="absolute inset-0">
