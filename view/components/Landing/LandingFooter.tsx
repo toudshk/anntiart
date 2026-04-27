@@ -15,6 +15,10 @@ export function LandingFooter() {
           toudshke
         </a>
       </p>
+      <p className="mt-2 text-sm text-zinc-500">
+        <span >Тихоненко Анна Дмитриевна</span>
+        <span className="font-medium ml-2">ИНН: 280118253210</span>
+      </p>
     </footer>
   );
 }

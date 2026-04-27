@@ -6,8 +6,13 @@ import { useEffect, useRef, useState } from "react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** Минимум показа, чтобы не мигало при быстром кэше; тяжёлые картинки успевают начать грузиться. */
+/** Минимум показа, чтобы не мигало при быстром кэше. */
 const MIN_VISIBLE_MS = 900;
+/**
+ * Потолок ожидания: иначе при «вечной» загрузке шрифта/картинки/трекера `load` не сработает
+ * и оверлей останется навсегда (часто у части пользователей с блокировками, медленной сетью).
+ */
+const MAX_WAIT_BOOTSTRAP_MS = 8_000;
 
 export function SiteLoader() {
   const [visible, setVisible] = useState(true);
@@ -26,13 +31,24 @@ export function SiteLoader() {
 
     const finish = async () => {
       const started = performance.now();
-      await Promise.all([
-        document.fonts.ready,
-        new Promise<void>((resolve) => {
-          if (document.readyState === "complete") resolve();
-          else window.addEventListener("load", () => resolve(), { once: true });
-        }),
-      ]);
+
+      const fontsReady = (document.fonts?.ready ?? Promise.resolve()).catch(
+        () => {
+          /* отдельные шрифты/браузеры могут бросать или не резолвить ready */
+        },
+      );
+
+      const windowLoaded = new Promise<void>((resolve) => {
+        if (document.readyState === "complete") resolve();
+        else window.addEventListener("load", () => resolve(), { once: true });
+      });
+
+      const timeout = new Promise<void>((resolve) => {
+        setTimeout(resolve, MAX_WAIT_BOOTSTRAP_MS);
+      });
+
+      await Promise.race([Promise.all([fontsReady, windowLoaded]), timeout]);
+
       const waitMore = Math.max(0, MIN_VISIBLE_MS - (performance.now() - started));
       await new Promise((r) => setTimeout(r, waitMore));
       if (cancelled) return;
