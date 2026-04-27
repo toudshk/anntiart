@@ -16,19 +16,38 @@ type Props = {
  */
 export function LocomotiveRoot({ children }: Props) {
   useLayoutEffect(() => {
+    const isIOS =
+      /iP(hone|ad|od)/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isTouchDevice =
+      window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+
+    // На iOS/тач-устройствах оставляем нативный скролл:
+    // меньше рисков зависаний/конфликтов с WebKit.
+    if (isIOS || isTouchDevice) return;
+
     // На iPhone/iPad Safari меняет viewport при показе/скрытии URL-бара.
     // Это не должно инициировать auto-refresh у ScrollTrigger, иначе скролл рвётся.
     ScrollTrigger.config({ ignoreMobileResize: true });
 
-    const loco = new LocomotiveScroll({
-      lenisOptions: {
-        lerp: 0.088,
-        smoothWheel: true,
-        wheelMultiplier: 0.9,
-      },
-    });
+    let loco: LocomotiveScroll | null = null;
+    try {
+      loco = new LocomotiveScroll({
+        lenisOptions: {
+          lerp: 0.088,
+          smoothWheel: true,
+          wheelMultiplier: 0.9,
+        },
+      });
+    } catch {
+      // Если библиотека не поднялась (редкие браузерные кейсы), остаёмся на native scroll.
+      return;
+    }
     const lenis = loco.lenisInstance;
-    if (!lenis) return;
+    if (!lenis) {
+      loco.destroy();
+      return;
+    }
 
     const pinType: "fixed" | "transform" = document.documentElement.style
       .transform
@@ -70,7 +89,7 @@ export function LocomotiveRoot({ children }: Props) {
       cancelAnimationFrame(rafId);
       ScrollTrigger.removeEventListener("refresh", onStRefresh);
       unsubLenisScroll();
-      loco.destroy();
+      loco?.destroy();
       ScrollTrigger.scrollerProxy(document.documentElement, {});
     };
   }, []);
