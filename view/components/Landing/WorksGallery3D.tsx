@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import * as THREE from "three";
 
 import type { PictureItem } from "view/constants/pictures";
+import { shouldUseUnoptimizedNextImage } from "view/lib/artwork-image-url";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -622,6 +624,9 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
 
   const gallery = photoUrls.length > 0 ? photoUrls : item?.src ? [item.src] : [];
   const activePhoto = gallery[photoIdx] ?? item?.src ?? "";
+  const photoAspect = parseAspectRatio(item?.aspectRatio);
+  const photoWidth = 1600;
+  const photoHeight = Math.max(1, Math.round(photoWidth / photoAspect));
   const shown = item ? [item] : [];
 
   return (
@@ -665,10 +670,13 @@ export function WorksGallery3D({ item, photoUrls = [] }: Props) {
       ) : null}
       {!view3d && item ? (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[linear-gradient(180deg,#e8e6e2_0%,#eceae7_100%)] dark:bg-[linear-gradient(180deg,#1a1f26_0%,#12161c_100%)]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={activePhoto}
             alt={item.alt}
+            width={photoWidth}
+            height={photoHeight}
+            unoptimized={shouldUseUnoptimizedNextImage(activePhoto)}
+            sizes="(max-width: 768px) 92vw, (max-width: 1024px) 86vw, 80vw"
             className="max-h-full max-w-full object-contain px-2 py-4"
           />
           {gallery.length > 1 ? (
