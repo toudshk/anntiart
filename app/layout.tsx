@@ -50,7 +50,7 @@ export default function RootLayout({
         <Providers>
           <LocomotiveRoot>{children}</LocomotiveRoot>
         </Providers>
-        <SiteLoader />
+        {/* <SiteLoader /> */}
       </body>
     </html>
   );
