@@ -26,6 +26,9 @@ import {
 
 gsap.registerPlugin(ScrollTrigger);
 
+/** Доп. подъём галереи (translateY) за проход секции hero — наезд без удлинения hero. */
+const GALLERY_HERO_SCROLL_LIFT_RATIO = 0.28;
+
 export type { PicturesGalleryProps } from "./shared";
 
 export function PicturesGallery({
@@ -117,6 +120,33 @@ export function PicturesGallery({
   }, []);
 
   useLayoutEffect(() => {
+    const hero = document.getElementById("landing-hero");
+    const root = rootRef.current;
+    if (!hero || !root) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        root,
+        { y: 0 },
+        {
+          y: () => -window.innerHeight * GALLERY_HERO_SCROLL_LIFT_RATIO,
+          ease: "none",
+          scrollTrigger: {
+            trigger: hero,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 0.55,
+            scroller: document.documentElement,
+            invalidateOnRefresh: true,
+          },
+        },
+      );
+    }, root);
+
+    return () => ctx.revert();
+  }, []);
+
+  useLayoutEffect(() => {
     const card = noteRef.current;
     if (!card) return;
     textLineRefs.current.length = activeTextLines.length;
@@ -146,7 +176,7 @@ export function PicturesGallery({
     <section
       ref={rootRef}
       id="pictures-gallery"
-      className="relative z-30 -mt-[min(37vh,19rem)] overflow-x-visible border-0 bg-[linear-gradient(180deg,#e0ded9_0%,#e7e4df_24%,#eceae7_56%,#f6f5f3_100%)] px-6 pb-20 pt-12 dark:bg-[linear-gradient(180deg,#f3f5f7_0%,#3b4249_18%,#242a31_40%,#161b21_62%,#0a0d11_100%)]"
+      className="relative z-30 -mt-[min(37vh,19rem)] overflow-x-visible border-0 bg-[linear-gradient(180deg,#e0ded9_0%,#e7e4df_24%,#eceae7_56%,#f6f5f3_100%)] px-6 pb-20 pt-12 will-change-transform dark:bg-[linear-gradient(180deg,#f3f5f7_0%,#3b4249_18%,#242a31_40%,#161b21_62%,#0a0d11_100%)]"
       aria-labelledby="pictures-heading"
     >
       <div

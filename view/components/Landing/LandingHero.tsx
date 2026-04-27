@@ -5,19 +5,20 @@ import { useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import { HeroArtStrip, type HeroArtStripItem } from "./HeroArtStrip";
-
 gsap.registerPlugin(ScrollTrigger);
+
+/** Фото для hero (галерея). */
+const HERO_GALLERY_IMAGE = "/pictures/landing/anna.png";
 
 /** Доп. скролл после первого экрана (липкий hero). GSAP ScrollTrigger надёжнее с vh, не dvh. */
 const HERO_EXTRA_SCROLL_VH = 42;
-/** Доля этой дистанции без размытия (0–1); дальше плавно до blur. Привязка к hero, не к галерее — стабильно с Lenis. */
+/** Доля дистанции скролла hero без размытия (0–1); дальше плавно blur. */
 const HERO_BLUR_SCROLL_DELAY = 0.32;
 
 function ScrollDownHint() {
   return (
     <div
-      className="pointer-events-none absolute bottom-10 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-0 text-zinc-500 dark:text-zinc-400"
+      className="pointer-events-none absolute bottom-10 left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-0 text-zinc-500 dark:text-zinc-400"
       data-gsap="scroll-hint"
     >
       <span className="sr-only">Прокрутите страницу вниз, чтобы увидеть галерею</span>
@@ -49,12 +50,7 @@ function ScrollDownHint() {
   );
 }
 
-type Props = {
-  /** Превью работ для «стены» над заголовком; пустой массив — блок не показываем. */
-  artStrip?: HeroArtStripItem[];
-};
-
-export function LandingHero({ artStrip = [] }: Props) {
+export function LandingHero() {
   const rootRef = useRef<HTMLElement>(null);
   const catRef = useRef<HTMLElement>(null);
   const lastWidthRef = useRef<number>(0);
@@ -63,14 +59,12 @@ export function LandingHero({ artStrip = [] }: Props) {
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       const section = rootRef.current;
-      if (section?.querySelector("[data-gsap='hero-strip-item']")) {
-        gsap.from("[data-gsap='hero-strip-item']", {
+      if (section?.querySelector("[data-gsap='hero-photo']")) {
+        gsap.from("[data-gsap='hero-photo']", {
           opacity: 0,
-          y: 20,
-          scale: 0.94,
-          stagger: 0.055,
-          duration: 0.52,
-          delay: 0.06,
+          x: 28,
+          duration: 0.85,
+          delay: 0.04,
           ease: "power2.out",
         });
       }
@@ -79,13 +73,13 @@ export function LandingHero({ artStrip = [] }: Props) {
         y: 28,
         duration: 0.85,
         ease: "power3.out",
-        delay: artStrip.length ? 0.14 : 0,
+        delay: 0,
       });
       gsap.from("[data-gsap='hero-text']", {
         opacity: 0,
         y: 16,
         duration: 0.7,
-        delay: artStrip.length ? 0.22 : 0.12,
+        delay: 0.12,
         ease: "power2.out",
       });
       gsap.from("[data-gsap='scroll-hint']", {
@@ -159,7 +153,7 @@ export function LandingHero({ artStrip = [] }: Props) {
       window.removeEventListener("resize", onResize);
       ctx.revert();
     };
-  }, [artStrip.length]);
+  }, []);
 
   useLayoutEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -182,8 +176,9 @@ export function LandingHero({ artStrip = [] }: Props) {
 
   return (
     <section
+      id="landing-hero"
       ref={rootRef}
-      className="relative z-10 bg-pastel-hero"
+      className="relative z-10 bg-pastel-hero dark:bg-zinc-950"
       style={{
         height: `calc(100svh + ${HERO_EXTRA_SCROLL_VH}vh)`,
       }}
@@ -199,37 +194,61 @@ export function LandingHero({ artStrip = [] }: Props) {
       </div>
       <div
         data-hero-sticky
-        className={
-          artStrip.length > 0
-            ? "sticky top-0 flex h-svh flex-col items-center justify-center gap-5 overflow-x-visible overflow-y-visible px-3 pt-24 text-center will-change-[filter,opacity] sm:gap-6 sm:px-10 sm:pt-28 lg:px-14 lg:pt-32"
-            : "sticky top-0 flex h-svh flex-col items-center justify-center gap-6 overflow-x-hidden px-6 pt-48 text-center will-change-[filter,opacity]"
-        }
+        className="sticky top-0 flex h-svh w-full flex-col overflow-hidden will-change-[filter,opacity,transform]"
       >
-        <div
-          data-gsap="hero-title-scale"
-          className="relative z-10 flex w-full flex-col items-center origin-center will-change-transform"
-        >
-          {artStrip.length > 0 ? <HeroArtStrip items={artStrip} /> : null}
-          <h1
-            id="landing-hero-heading"
-            data-gsap="hero-title"
-            className="font-literature-decor relative z-10 text-4xl font-thin tracking-tight text-zinc-900 sm:text-6xl lg:text-8xl dark:text-zinc-100"
+        <div className="relative isolate z-10 min-h-0 w-full flex-1 overflow-hidden">
+          {/* Фото справа, под слоем текста (z-0) — вне scale, остаётся на месте при скролле */}
+          <div
+            data-gsap="hero-photo"
+            className="absolute inset-y-0 right-0 z-0 w-[min(88%,24rem)] sm:w-[min(85%,30rem)] md:w-[min(70%,36rem)] lg:w-[min(46vw,38rem)] xl:w-[min(60vw,40rem)]"
           >
-            Галерея Анны Тихоненко
-          </h1>
-          <p
-            data-gsap="hero-text"
-            className="relative z-10 mx-auto mt-6 max-w-lg text-center text-lg text-zinc-600 dark:text-zinc-400"
+            <div className="absolute inset-0 translate-x-3 sm:translate-x-4 md:translate-x-5 lg:translate-x-6 xl:translate-x-8">
+              <div className="absolute inset-0">
+                <Image
+                  src={HERO_GALLERY_IMAGE}
+                  alt="Анна Тихоненко в галерее среди работ"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 90vw, (max-width: 1024px) 60vw, 46vw"
+                  className="object-cover object-[64%_center] brightness-[1.05] contrast-[1.08] saturate-[0.86] hue-rotate-[-8deg] lg:object-[62%_center] dark:brightness-[0.9] dark:contrast-[1.06] dark:saturate-[0.78] dark:hue-rotate-[-4deg]"
+                />
+                {/* Плавный переход фото → фон hero (цвет pastel-hero / zinc-950) */}
+                <div
+                  className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-[min(100%,18rem)] bg-[linear-gradient(90deg,#e0ded9_0%,rgba(224,222,217,0.88)_14%,rgba(224,222,217,0.45)_38%,rgba(224,222,217,0.12)_58%,transparent_78%)] sm:w-[min(100%,22rem)] md:w-[min(100%,26rem)] lg:w-[min(100%,30rem)] dark:bg-[linear-gradient(90deg,rgb(9_9_11)_0%,rgba(9,9,11,0.82)_16%,rgba(9,9,11,0.42)_40%,rgba(9,9,11,0.1)_60%,transparent_80%)]"
+                  aria-hidden
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Текст по центру; scale только здесь — фото не участвует */}
+          <div
+            data-gsap="hero-title-scale"
+            className="pointer-events-none absolute inset-0 z-20 flex origin-center flex-col items-center justify-center px-4 pt-16 text-center will-change-transform sm:px-10 sm:pt-20 md:pt-24 lg:pt-28"
           >
-            <a
-              href="https://t.me/anntiart"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-zinc-700 underline decoration-zinc-400/70 underline-offset-2 transition hover:text-zinc-900 hover:decoration-zinc-600 dark:text-zinc-300 dark:decoration-zinc-600 dark:hover:text-zinc-100 dark:hover:decoration-zinc-400"
-            >
-              @anntiart
-            </a>
-          </p>
+            <div className="pointer-events-auto flex max-w-[100vw] flex-col items-center">
+              <h1
+                id="landing-hero-heading"
+                data-gsap="hero-title"
+                className="font-literature-decor whitespace-nowrap text-4xl font-thin tracking-tight text-zinc-900 sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl dark:text-zinc-100"
+              >
+                Галерея Анны Тихоненко
+              </h1>
+              <p
+                data-gsap="hero-text"
+                className="mx-auto mt-4 max-w-lg text-base text-zinc-800 sm:mt-5 sm:text-lg dark:text-zinc-200"
+              >
+                <a
+                  href="https://t.me/anntiart"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-zinc-800 underline decoration-zinc-500/60 underline-offset-2 transition hover:text-zinc-950 hover:decoration-zinc-700 dark:text-zinc-200 dark:decoration-zinc-400/70 dark:hover:text-white dark:hover:decoration-zinc-300"
+                >
+                  @anntiart
+                </a>
+              </p>
+            </div>
+          </div>
         </div>
         <div
           data-gsap="hero-paws"
