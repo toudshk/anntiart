@@ -3,7 +3,6 @@ import { Cormorant_Garamond, Geist_Mono, Literata } from "next/font/google";
 
 import { LocomotiveRoot } from "view/components/LocomotiveRoot";
 import { Providers } from "view/components/Providers";
-import { SiteLoader } from "view/components/SiteLoader";
 import "view/styles/globals.css";
 
 const baseSans = Literata({
@@ -50,7 +49,6 @@ export default function RootLayout({
         <Providers>
           <LocomotiveRoot>{children}</LocomotiveRoot>
         </Providers>
-        {/* <SiteLoader /> */}
       </body>
     </html>
   );
