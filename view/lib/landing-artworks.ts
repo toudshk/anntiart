@@ -51,46 +51,73 @@ function staticBundle(): LandingArtworkBundle {
   };
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Одна попытка собрать бандл из БД. При ошибке — исключение (ретраи снаружи).
+ */
+async function fetchLandingBundleFromDb(
+  fallback: LandingArtworkBundle,
+): Promise<LandingArtworkBundle> {
+  const rows = await prisma.artwork.findMany({
+    /* Как в админке: sortOrder, при равенстве — сначала новые. */
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    include: { images: { orderBy: { sortOrder: "asc" } } },
+  });
+
+  const dbWorks = rows.filter((r) => r.section === ArtworkSection.works);
+  const dbColl = rows.filter((r) => r.section === ArtworkSection.collection);
+
+  const works = dbWorks.map(dbArtworkToPictureItem);
+
+  const dbCollectionItems = dbColl.map(dbArtworkToPictureItem);
+  const useDbCollection =
+    dbColl.length > 0 && hasInteractiveCollectionSeries(dbCollectionItems);
+  const collection = useDbCollection
+    ? dbCollectionItems
+    : fallback.collection;
+
+  const workMeta: Record<string, WorkMeta> = {};
+  for (const row of dbWorks) {
+    workMeta[row.slug] = dbArtworkToWorkMeta(row);
+  }
+
+  const collectionMeta = useDbCollection
+    ? Object.fromEntries(
+        dbColl.map((row) => [row.slug, dbArtworkToWorkMeta(row)] as const),
+      )
+    : fallback.collectionMeta;
+
+  return { works, collection, workMeta, collectionMeta };
+}
+
+/** Задержки между попытками (холодный пул БД / сетевые таймауты на проде). */
+const RETRY_DELAYS_MS = [0, 120, 350] as const;
 
 /**
  * Работы для главной страницы: блок "Работы" только из БД,
  * для серии при отсутствии записей остаётся fallback на статику.
+ *
+ * При временном сбое запроса раньше сразу отдавался staticBundle с works: [] —
+ * в UI было «0/0», после перезагрузки данные подтягивались. Ретраи снижают это.
  */
 export async function getLandingArtworkBundle(): Promise<LandingArtworkBundle> {
   const fallback = staticBundle();
 
-  try {
-    const rows = await prisma.artwork.findMany({
-      /* Как в админке: sortOrder, при равенстве — сначала новые. */
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
-      include: { images: { orderBy: { sortOrder: "asc" } } },
-    });
-
-    const dbWorks = rows.filter((r) => r.section === ArtworkSection.works);
-    const dbColl = rows.filter((r) => r.section === ArtworkSection.collection);
-
-    const works = dbWorks.map(dbArtworkToPictureItem);
-
-    const dbCollectionItems = dbColl.map(dbArtworkToPictureItem);
-    const useDbCollection =
-      dbColl.length > 0 && hasInteractiveCollectionSeries(dbCollectionItems);
-    const collection = useDbCollection
-      ? dbCollectionItems
-      : fallback.collection;
-
-    const workMeta: Record<string, WorkMeta> = {};
-    for (const row of dbWorks) {
-      workMeta[row.slug] = dbArtworkToWorkMeta(row);
+  let lastErr: unknown;
+  for (let i = 0; i < RETRY_DELAYS_MS.length; i++) {
+    if (RETRY_DELAYS_MS[i] > 0) {
+      await sleep(RETRY_DELAYS_MS[i]);
     }
-
-    const collectionMeta = useDbCollection
-      ? Object.fromEntries(
-          dbColl.map((row) => [row.slug, dbArtworkToWorkMeta(row)] as const),
-        )
-      : fallback.collectionMeta;
-
-    return { works, collection, workMeta, collectionMeta };
-  } catch {
-    return fallback;
+    try {
+      return await fetchLandingBundleFromDb(fallback);
+    } catch (e) {
+      lastErr = e;
+    }
   }
+
+  console.error("getLandingArtworkBundle: все попытки БД провалились", lastErr);
+  return fallback;
 }

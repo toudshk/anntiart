@@ -12,6 +12,7 @@ import { formatPriceRub } from "view/lib/format-price";
 import { shouldUseUnoptimizedNextImage } from "view/lib/artwork-image-url";
 
 import { WorksGallery3D } from "../WorksGallery3D";
+import { AvailabilityPublishedContact } from "./AvailabilityPublishedContact";
 import { ArtworkMasonryGrid } from "./ArtworkMasonryGrid";
 import { CollectionInteractive } from "./CollectionInteractive";
 import { GalleryWorkNav } from "./GalleryWorkNav";
@@ -228,9 +229,13 @@ export function PicturesGallery({
               </p>
             ) : null}
             {artworkStatusLabel(activeMeta.status) ? (
-              <p className="mt-2 inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2.5 py-0.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200">
-                {artworkStatusLabel(activeMeta.status)}
-              </p>
+              activeMeta.status === "published" ? (
+                <AvailabilityPublishedContact />
+              ) : (
+                <p className="mt-2 inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2.5 py-0.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200">
+                  {artworkStatusLabel(activeMeta.status)}
+                </p>
+              )
             ) : null}
             {activeMeta.priceRub != null ? (
               <p className="mt-2 text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
