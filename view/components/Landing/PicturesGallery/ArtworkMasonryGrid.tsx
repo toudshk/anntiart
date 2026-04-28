@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 
+import { useScrollLock } from "view/components/LocomotiveRoot";
 import { artworkStatusLabel } from "view/constants/works-meta";
 import { shouldUseUnoptimizedNextImage } from "view/lib/artwork-image-url";
 
@@ -20,11 +22,11 @@ function mobileCardTitle(text: string): string {
 
 export function ArtworkMasonryGrid({ photos }: Props) {
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const { lockScroll, unlockScroll } = useScrollLock();
 
   useEffect(() => {
     if (activeIdx == null) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockScroll();
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -38,10 +40,10 @@ export function ArtworkMasonryGrid({ photos }: Props) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      unlockScroll();
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [activeIdx, photos.length]);
+  }, [activeIdx, photos.length, lockScroll, unlockScroll]);
 
   const activePhoto = activeIdx != null ? photos[activeIdx] : null;
 
@@ -108,74 +110,81 @@ export function ArtworkMasonryGrid({ photos }: Props) {
         </div>
       </section>
 
-      {activePhoto ? (
-        <div
-          className="fixed inset-0 z-[140] flex items-center justify-center bg-black/84 p-4 backdrop-blur-sm"
-          onClick={() => setActiveIdx(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label={activePhoto.alt}
-        >
-          <button
-            type="button"
-            onClick={() => setActiveIdx(null)}
-            className="absolute right-4 top-4 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/15"
-            aria-label="Закрыть увеличенное фото"
-          >
-            Закрыть
-          </button>
-          {photos.length > 1 ? (
-            <>
+      {activePhoto && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[140] flex items-center justify-center bg-black/84 p-4 backdrop-blur-sm"
+              onClick={() => setActiveIdx(null)}
+              role="dialog"
+              aria-modal="true"
+              aria-label={activePhoto.alt}
+            >
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveIdx((v) => (v == null ? 0 : (v - 1 + photos.length) % photos.length));
-                }}
-                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-white transition hover:bg-white/15"
-                aria-label="Предыдущее фото"
+                onClick={() => setActiveIdx(null)}
+                className="absolute right-4 top-4 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/15"
+                aria-label="Закрыть увеличенное фото"
               >
-                ←
+                Закрыть
               </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveIdx((v) => (v == null ? 0 : (v + 1) % photos.length));
-                }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-white transition hover:bg-white/15"
-                aria-label="Следующее фото"
-              >
-                →
-              </button>
-            </>
-          ) : null}
+              {photos.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveIdx((v) =>
+                        v == null ? 0 : (v - 1 + photos.length) % photos.length,
+                      );
+                    }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-white transition hover:bg-white/15"
+                    aria-label="Предыдущее фото"
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveIdx((v) =>
+                        v == null ? 0 : (v + 1) % photos.length,
+                      );
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-white transition hover:bg-white/15"
+                    aria-label="Следующее фото"
+                  >
+                    →
+                  </button>
+                </>
+              ) : null}
 
-          <figure
-            className="max-h-full max-w-[min(92vw,1180px)]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Image
-              src={activePhoto.src}
-              alt={activePhoto.alt}
-              width={1600}
-              height={2200}
-              sizes="92vw"
-              unoptimized={shouldUseUnoptimizedNextImage(activePhoto.src)}
-              className="max-h-[82vh] max-w-full rounded-2xl object-contain shadow-[0_32px_64px_-28px_rgba(0,0,0,0.8)]"
-            />
-            <figcaption className="mt-3 text-center text-sm text-white/88">
-              <span className="font-medium">{activePhoto.title}</span>
-              <span className="mx-2 text-white/45">•</span>
-              <span>{activePhoto.alt}</span>
-              <span className="mx-2 text-white/45">•</span>
-              <span>
-                {activeIdx! + 1} / {photos.length}
-              </span>
-            </figcaption>
-          </figure>
-        </div>
-      ) : null}
+              <figure
+                className="max-h-full max-w-[min(92vw,1180px)]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Image
+                  src={activePhoto.src}
+                  alt={activePhoto.alt}
+                  width={1600}
+                  height={2200}
+                  sizes="92vw"
+                  unoptimized={shouldUseUnoptimizedNextImage(activePhoto.src)}
+                  className="max-h-[82vh] max-w-full rounded-2xl object-contain shadow-[0_32px_64px_-28px_rgba(0,0,0,0.8)]"
+                />
+                <figcaption className="mt-3 text-center text-sm text-white/88">
+                  <span className="font-medium">{activePhoto.title}</span>
+                  <span className="mx-2 text-white/45">•</span>
+                  <span>{activePhoto.alt}</span>
+                  <span className="mx-2 text-white/45">•</span>
+                  <span>
+                    {activeIdx! + 1} / {photos.length}
+                  </span>
+                </figcaption>
+              </figure>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

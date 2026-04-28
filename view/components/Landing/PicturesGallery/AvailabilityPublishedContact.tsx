@@ -30,6 +30,7 @@ const INST_URL = "https://www.instagram.com/anntiart/";
 type Props = {
   /** По умолчанию отступ сверху как у старой плашки (`mt-2` в карточке работы, `mt-1` у фрагмента). */
   className?: string;
+  label?: string;
 };
 
 /**
@@ -37,6 +38,7 @@ type Props = {
  */
 export function AvailabilityPublishedContact({
   className = "mt-2",
+  label = "В наличии",
 }: Props = {}) {
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -104,14 +106,18 @@ export function AvailabilityPublishedContact({
         aria-expanded={open}
         aria-controls={`${panelId}-panel`}
         aria-haspopup="dialog"
-        aria-label="В наличии — контакты для связи и условия покупки"
+        aria-label={`${label} — контакты для связи и условия покупки`}
         onClick={(e) => {
           e.stopPropagation();
           setPinned((p) => !p);
         }}
-        className="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full border border-emerald-400/55 bg-emerald-50/90 px-2.5 py-1 text-left text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-emerald-950 shadow-[0_1px_0_rgba(255,255,255,0.85)_inset] outline-none ring-emerald-400/35 transition hover:border-emerald-500/65 hover:bg-emerald-100/95 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-emerald-500/40 dark:bg-emerald-950/55 dark:text-emerald-50 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] dark:ring-emerald-500/35 dark:focus-visible:ring-offset-zinc-950"
+        className={`inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-full px-2.5 py-1 text-left text-[0.68rem] font-semibold uppercase tracking-[0.12em] outline-none transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950 ${
+          label === "В наличии"
+            ? "border border-emerald-400/55 bg-emerald-50/90 text-emerald-950 shadow-[0_1px_0_rgba(255,255,255,0.85)_inset] ring-emerald-400/35 hover:border-emerald-500/65 hover:bg-emerald-100/95 dark:border-emerald-500/40 dark:bg-emerald-950/55 dark:text-emerald-50 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] dark:ring-emerald-500/35"
+            : "border border-zinc-300/90 bg-white/80 text-zinc-700 shadow-[0_1px_0_rgba(255,255,255,0.85)_inset] ring-zinc-400/35 hover:border-zinc-400 hover:bg-zinc-100/95 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] dark:ring-zinc-500/35"
+        }`}
       >
-        <span className="min-w-0">В наличии</span>
+        <span className="min-w-0">{label}</span>
         <ChevronMini
           className={`shrink-0 opacity-75 transition-transform duration-200 ${
             open ? "rotate-180" : ""

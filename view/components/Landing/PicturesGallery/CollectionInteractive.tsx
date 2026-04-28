@@ -151,13 +151,10 @@ export function CollectionInteractive({
                 </p>
               ) : null}
               {artworkStatusLabel(activeFragmentMeta?.status) ? (
-                activeFragmentMeta?.status === "published" ? (
-                  <AvailabilityPublishedContact className="mt-1" />
-                ) : (
-                  <p className="mt-1 inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2.5 py-0.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200">
-                    {artworkStatusLabel(activeFragmentMeta?.status)}
-                  </p>
-                )
+                <AvailabilityPublishedContact
+                  className="mt-1"
+                  label={artworkStatusLabel(activeFragmentMeta?.status) ?? "Статус"}
+                />
               ) : null}
               {activeFragmentMeta?.priceRub != null ? (
                 <p className="mt-1 text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">

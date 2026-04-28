@@ -229,13 +229,9 @@ export function PicturesGallery({
               </p>
             ) : null}
             {artworkStatusLabel(activeMeta.status) ? (
-              activeMeta.status === "published" ? (
-                <AvailabilityPublishedContact />
-              ) : (
-                <p className="mt-2 inline-flex rounded-full border border-zinc-200/90 bg-white/70 px-2.5 py-0.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-zinc-700 dark:border-zinc-600 dark:bg-zinc-800/70 dark:text-zinc-200">
-                  {artworkStatusLabel(activeMeta.status)}
-                </p>
-              )
+              <AvailabilityPublishedContact
+                label={artworkStatusLabel(activeMeta.status) ?? "Статус"}
+              />
             ) : null}
             {activeMeta.priceRub != null ? (
               <p className="mt-2 text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
