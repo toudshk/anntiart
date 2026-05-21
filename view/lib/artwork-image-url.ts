@@ -59,9 +59,14 @@ export function isRemoteHttpImageSrc(src: string): boolean {
 }
 
 /**
- * Только внешние `http(s)` без `remotePatterns` — обход оптимизатора.
- * Пути вида `/uploads/…` идут через `/_next/image` как локальные (как в конфиге Next по умолчанию).
+ * Когда отдавать оригинал без `/_next/image`:
+ * - внешние `http(s)` (нет `remotePatterns` для произвольных CDN);
+ * - файлы из `/uploads/…` (загрузки в `public/uploads`): надёжно с nginx `alias`,
+ *   без Sharp/внутреннего fetch оптимизатора (избегаем 400 на проде с Bun и т.п.).
  */
 export function shouldUseUnoptimizedNextImage(src: string): boolean {
-  return isRemoteHttpImageSrc(src);
+  const t = src.trim();
+  if (isRemoteHttpImageSrc(t)) return true;
+  if (t.startsWith("/uploads/")) return true;
+  return false;
 }
