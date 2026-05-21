@@ -1,27 +1,21 @@
 "use client";
 
 import type { ChangeEventHandler } from "react";
-import type { UseFormRegister } from "react-hook-form";
-
-import { fieldClass, labelClass } from "./constants";
-import type { ArtworkFormInitial } from "./types";
 
 type Props = {
-  mode: "create" | "edit";
   uploadBusy: boolean;
   loading: boolean;
-  previewUrls: string[];
-  register: UseFormRegister<ArtworkFormInitial>;
+  imageUrls: string[];
   onPickImage: ChangeEventHandler<HTMLInputElement>;
+  onRemoveImage: (index: number) => void;
 };
 
 export function ArtworkImagesSection({
-  mode,
   uploadBusy,
   loading,
-  previewUrls,
-  register,
+  imageUrls,
   onPickImage,
+  onRemoveImage,
 }: Props) {
   return (
     <section className="space-y-4 rounded-2xl border border-zinc-200/90 bg-white/70 p-4 dark:border-zinc-700 dark:bg-zinc-950/50">
@@ -41,65 +35,50 @@ export function ArtworkImagesSection({
           {uploadBusy ? "Загрузка…" : "Выбрать файл"}
         </label>
         <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-          JPEG, PNG, WebP или GIF, до 15 МБ. Файл сохранится в{" "}
-          <code className="rounded bg-zinc-100 px-1 py-0.5 text-[0.7rem] dark:bg-zinc-800">
-            /public/uploads/artworks
-          </code>
-          .
+          JPEG, PNG, WebP или GIF, до 15 МБ. Можно загрузить несколько файлов —
+          первое изображение станет основным в 3D-блоке, остальные — деталями.
         </p>
       </div>
 
-      {previewUrls.length > 0 ? (
+      {imageUrls.length > 0 ? (
         <div className="space-y-2">
           <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-            Превью: первое изображение — основной план, далее детали.
+            Загружено: {imageUrls.length}. Первое — основной план, далее детали.
           </p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {previewUrls.map((url, idx) => (
+            {imageUrls.map((url, idx) => (
               <div
                 key={`${url}-${idx}`}
-                className="overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-900/40"
+                className="group relative overflow-hidden rounded-xl border border-zinc-200/90 bg-zinc-100/60 dark:border-zinc-700 dark:bg-zinc-900/40"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={url}
-                  alt={`Предпросмотр ${idx + 1}`}
+                  alt={`Изображение ${idx + 1}`}
                   className="mx-auto h-28 w-full object-cover"
                 />
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => onRemoveImage(idx)}
+                  className="absolute right-1.5 top-1.5 rounded-lg bg-black/55 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-white opacity-0 transition hover:bg-black/75 group-hover:opacity-100 disabled:opacity-40"
+                >
+                  Удалить
+                </button>
+                {idx === 0 ? (
+                  <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[0.65rem] font-medium text-white">
+                    Основное
+                  </span>
+                ) : null}
               </div>
             ))}
           </div>
         </div>
-      ) : null}
-
-      <label className={labelClass}>
-        <span>URL изображений (каждый с новой строки)</span>
-        <textarea
-          rows={4}
-          className={`${fieldClass} font-mono`}
-          placeholder={"/uploads/artworks/main.jpg\n/uploads/artworks/detail-1.jpg"}
-          {...register("imageUrlsText")}
-        />
-        <p className="mt-1.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-          Первое изображение используется как главный план в 3D-блоке, остальные
-          показываются как детали.
+      ) : (
+        <p className="rounded-xl border border-dashed border-zinc-300/90 px-3 py-4 text-center text-xs text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
+          Изображения пока не загружены
         </p>
-      </label>
-
-      <label className={labelClass}>
-        <span>
-          URL главной картинки (legacy, можно оставить пустым) (
-          {mode === "create"
-            ? "если не загружали файл — обязательно"
-            : "оставьте пустым, чтобы не менять"}
-          )
-        </span>
-        <input
-          className={`${fieldClass} font-mono`}
-          placeholder="/pictures/example.jpg"
-          {...register("imageUrl")}
-        />
-      </label>
+      )}
     </section>
   );
 }

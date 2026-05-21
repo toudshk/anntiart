@@ -32,22 +32,10 @@ export function ArtworkBasicsSection({
       </label>
 
       {mode === "create" ? (
-        <>
-          <input type="hidden" {...register("slug", { required: true })} />
-          <input type="hidden" {...register("alt", { required: true })} />
-        </>
+        <input type="hidden" {...register("slug", { required: true })} />
       ) : null}
 
-      {mode === "edit" ? (
-        <label className={labelClass}>
-          <span>Alt</span>
-          <input
-            required
-            className={fieldClass}
-            {...register("alt", { required: true })}
-          />
-        </label>
-      ) : null}
+      <input type="hidden" {...register("alt")} />
 
       {mode === "create" && hideCreateDescriptionUi ? (
         <input type="hidden" {...register("description", { required: true })} />

@@ -19,8 +19,8 @@ export type ArtworkFormInitial = {
   hotspotW: number | null;
   hotspotH: number | null;
   collectionSeriesKey: string;
-  imageUrlsText: string;
-  imageUrl: string;
+  /** Начальный список URL (только для mode=edit). */
+  imageUrls?: string[];
 };
 
 export type ArtworkCreatePreset = {

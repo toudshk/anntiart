@@ -27,8 +27,16 @@ export async function POST(req: Request) {
   const json = await req.json();
   const parsed = createArtworkSchema.safeParse(json);
   if (!parsed.success) {
+    const details = parsed.error.flatten();
+    const msgs = [
+      ...details.formErrors,
+      ...Object.values(details.fieldErrors).flat(),
+    ];
     return NextResponse.json(
-      { error: "Invalid payload", details: parsed.error.flatten() },
+      {
+        error: msgs[0] ?? "Проверьте поля формы",
+        details,
+      },
       { status: 400 },
     );
   }

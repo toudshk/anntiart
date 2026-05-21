@@ -69,12 +69,11 @@ export function ArtworkForm(props: Props) {
       />
 
       <ArtworkImagesSection
-        mode={props.mode}
         uploadBusy={controller.uploadBusy}
         loading={controller.loading}
-        previewUrls={controller.previewUrls}
-        register={controller.register}
+        imageUrls={controller.imageUrls}
         onPickImage={controller.onPickImage}
+        onRemoveImage={controller.onRemoveImage}
       />
 
       <ArtworkFormActions

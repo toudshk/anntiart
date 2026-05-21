@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
-import { slugFromTitle } from "view/lib/slug-from-title";
+import { resolveArtworkSlug } from "view/lib/slug-from-title";
 import {
   apiErrorMessage,
   createAdminArtwork,
@@ -20,7 +20,6 @@ import {
   boxAspectFromSummary,
   isFragmentCreatePreset,
   mergeCreateDefaults,
-  parseImageUrls,
 } from "./utils";
 import type {
   ArtworkCreatePreset,
@@ -40,6 +39,9 @@ export function useArtworkFormController(props: Props) {
   const [composites, setComposites] = useState<AdminArtworkSummary[]>([]);
   const [compositionPickSlug, setCompositionPickSlug] = useState("");
   const [manualCompositionUrl, setManualCompositionUrl] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>(() =>
+    props.mode === "edit" ? (props.initial.imageUrls ?? []) : [],
+  );
   const autoSeriesKeyDoneRef = useRef(false);
 
   const { register, watch, setValue, getValues, handleSubmit } =
@@ -105,27 +107,30 @@ export function useArtworkFormController(props: Props) {
 
   useEffect(() => {
     if (props.mode !== "create") return;
-    const next = slugFromTitle(values.title);
+    const trimmed = values.title.trim();
+    const next = trimmed ? resolveArtworkSlug(trimmed) : "";
     if (next === values.slug) return;
-    setValue("slug", next, { shouldValidate: true, shouldDirty: false });
+    setValue("slug", next, { shouldDirty: false });
   }, [props.mode, setValue, values.title, values.slug]);
 
   useEffect(() => {
-    if (props.mode !== "create") return;
     const t = values.title.trim();
+    if (getValues("alt") === t) return;
     setValue("alt", t, { shouldDirty: false });
-  }, [props.mode, setValue, values.title]);
+  }, [getValues, setValue, values.title]);
 
   useEffect(() => {
     if (!hideCreateDescriptionUi) return;
     const t = values.title.trim();
+    if (getValues("description") === t) return;
     setValue("description", t, { shouldDirty: false });
-  }, [hideCreateDescriptionUi, setValue, values.title]);
+  }, [hideCreateDescriptionUi, getValues, setValue, values.title]);
 
   useEffect(() => {
     if (!wantAutoSeriesKey || !isCollection) return;
+    if (getValues("isCollectionComposite") === true) return;
     setValue("isCollectionComposite", true, { shouldDirty: false });
-  }, [wantAutoSeriesKey, isCollection, setValue]);
+  }, [wantAutoSeriesKey, isCollection, getValues, setValue]);
 
   useEffect(() => {
     if (!showHotspots) {
@@ -166,10 +171,7 @@ export function useArtworkFormController(props: Props) {
       ? values.aspectRatio.trim()
       : "2/3";
 
-  const previewUrls = useMemo(
-    () => parseImageUrls(values.imageUrlsText, values.imageUrl),
-    [values.imageUrl, values.imageUrlsText],
-  );
+  const previewUrls = imageUrls;
 
   const onSectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const section = e.target.value as ArtworkSection;
@@ -200,23 +202,22 @@ export function useArtworkFormController(props: Props) {
 
   const onSubmit = handleSubmit(async (submittedValues) => {
     setError(null);
-    const normalizedImageUrls = parseImageUrls(
-      submittedValues.imageUrlsText,
-      submittedValues.imageUrl,
-    );
-    if (props.mode === "create" && normalizedImageUrls.length === 0) {
-      setError("Загрузите изображение или укажите URL ниже.");
+    if (props.mode === "create" && imageUrls.length === 0) {
+      setError("Загрузите изображение.");
       return;
     }
 
     setLoading(true);
     try {
+      const title = submittedValues.title.trim();
+      const alt = title;
+
       if (props.mode === "create") {
         const isColl = submittedValues.section === "collection";
         const payload = {
-          slug: submittedValues.slug.trim(),
-          title: submittedValues.title.trim(),
-          alt: submittedValues.title.trim(),
+          slug: resolveArtworkSlug(title),
+          title,
+          alt,
           description: submittedValues.description.trim(),
           medium: submittedValues.medium.trim(),
           widthCm: undefined,
@@ -239,8 +240,8 @@ export function useArtworkFormController(props: Props) {
           ...(submittedValues.completedOn.trim()
             ? { completedOn: submittedValues.completedOn.trim() }
             : {}),
-          imageUrl: normalizedImageUrls[0],
-          imageUrls: normalizedImageUrls,
+          imageUrl: imageUrls[0],
+          imageUrls,
         };
         await createAdminArtwork(payload);
         router.push("/admin");
@@ -250,8 +251,8 @@ export function useArtworkFormController(props: Props) {
 
       const isColl = submittedValues.section === "collection";
       const patch: Record<string, unknown> = {
-        title: submittedValues.title.trim(),
-        alt: submittedValues.alt.trim(),
+        title,
+        alt,
         description: submittedValues.description.trim(),
         medium: submittedValues.medium.trim(),
         priceRub: submittedValues.priceRub,
@@ -270,9 +271,9 @@ export function useArtworkFormController(props: Props) {
           ? submittedValues.completedOn.trim()
           : null,
       };
-      if (normalizedImageUrls.length > 0) {
-        patch.imageUrl = normalizedImageUrls[0];
-        patch.imageUrls = normalizedImageUrls;
+      if (imageUrls.length > 0) {
+        patch.imageUrl = imageUrls[0];
+        patch.imageUrls = imageUrls;
       }
 
       await patchAdminArtwork(submittedValues.slug, patch);
@@ -311,16 +312,17 @@ export function useArtworkFormController(props: Props) {
     try {
       const url = await uploadAdminArtworkFile(file);
       if (url) {
-        setValue("imageUrl", url, { shouldDirty: true, shouldValidate: true });
-        const current = getValues("imageUrlsText").trim();
-        const next = current ? `${current}\n${url}` : url;
-        setValue("imageUrlsText", next, { shouldDirty: true, shouldValidate: true });
+        setImageUrls((prev) => [...prev, url]);
       }
     } catch (err) {
       toast.error(apiErrorMessage(err));
     } finally {
       setUploadBusy(false);
     }
+  };
+
+  const onRemoveImage = (index: number) => {
+    setImageUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
   return {
@@ -346,11 +348,13 @@ export function useArtworkFormController(props: Props) {
     compositionGuideUrl,
     compositionBoxAspect,
     previewUrls,
+    imageUrls,
     onSectionChange,
     onHotspotEditorChange,
     onResetHotspot,
     onSubmit,
     onDelete,
     onPickImage,
+    onRemoveImage,
   };
 }

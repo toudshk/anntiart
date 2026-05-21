@@ -33,8 +33,6 @@ export const emptyCreate = (): ArtworkFormInitial => ({
   hotspotW: null,
   hotspotH: null,
   collectionSeriesKey: "",
-  imageUrlsText: "",
-  imageUrl: "",
 });
 
 export function isFragmentCreatePreset(
@@ -63,23 +61,6 @@ export function mergeCreateDefaults(
       ? { collectionSeriesKey: preset.collectionSeriesKey }
       : {}),
   };
-}
-
-export function parseImageUrls(
-  imageUrlsText: string,
-  fallbackImageUrl: string,
-): string[] {
-  const fromText = imageUrlsText
-    .split(/\r?\n/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const withFallback =
-    fromText.length > 0
-      ? fromText
-      : fallbackImageUrl.trim()
-        ? [fallbackImageUrl.trim()]
-        : [];
-  return Array.from(new Set(withFallback));
 }
 
 export function parseOptionalNumber(v: string) {

@@ -55,7 +55,7 @@ export function artworkInvariantsError(val: ArtworkInvariantInput): string | nul
 
 export const createArtworkSchema = z
   .object({
-    slug: z.string().min(2).max(120),
+    slug: z.string().min(2, "Slug слишком короткий").max(120),
     title: z.string().min(1).max(180),
     alt: z.string().min(1).max(240),
     description: z.string().min(1),

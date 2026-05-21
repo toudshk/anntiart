@@ -41,11 +41,13 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: imageRemotePatterns(),
     /**
-     * Явно разрешаем файлы из `public/uploads` для `/_next/image` (Next 16+).
-     * Без этого при частичной/кастомной конфигурации `localPatterns` оптимизатор
-     * может отвечать 400 «url parameter is not allowed».
+     * Явно разрешаем локальные файлы из `public/` для `/_next/image` (Next 16+).
+     * При частичной конфигурации `localPatterns` оптимизатор отклоняет остальные пути.
      */
-    localPatterns: [{ pathname: "/uploads/**", search: "" }],
+    localPatterns: [
+      { pathname: "/uploads/**", search: "" },
+      { pathname: "/pictures/**", search: "" },
+    ],
   },
 };
 
